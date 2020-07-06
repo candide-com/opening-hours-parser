@@ -107,7 +107,7 @@ const makeDayArray = (
       endDay = endDay + 7
     }
 
-    return [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13].reduce(
+    return [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14].reduce(
       (memo: Array<Day>, item: number) => {
         if (item < startDay) {
           return memo
@@ -117,14 +117,14 @@ const makeDayArray = (
           return memo
         }
 
-        return [...memo, item > 6 ? item - 7 : item]
+        return [...memo, item > 7 ? item - 7 : item]
       },
       [],
     )
   }
 
   if (dayPart.kind === TokenKind.AllWeek) {
-    return [0, 1, 2, 3, 4, 5, 6]
+    return [1, 2, 3, 4, 5, 6, 7]
   }
 
   return [getDay(dayPart.text)]

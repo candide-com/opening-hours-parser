@@ -6,8 +6,10 @@ describe("no timezone", () => {
     it("returns true", () => {
       const {isOpenOn} = openingHours([
         {dayOfWeek: 1, start: "10:00", end: "14:00", type: "open"},
+        {dayOfWeek: 7, start: "10:00", end: "14:00", type: "open"},
       ])
 
+      expect(isOpenOn(new Date("2020-01-05T12:00:00.000"))).to.eq(true)
       expect(isOpenOn(new Date("2020-01-06T12:00:00.000"))).to.eq(true)
     })
   })
