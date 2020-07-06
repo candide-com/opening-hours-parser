@@ -1,2 +1,7 @@
 import {parse} from "./parser"
-export default parse
+import {openingTimes} from "./api"
+
+export default {
+  parse,
+  openingTimes,
+}
