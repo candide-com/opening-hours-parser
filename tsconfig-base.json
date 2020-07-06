@@ -9,6 +9,7 @@
     "noErrorTruncation": true,
     "strict": true,
     "resolveJsonModule": true,
+    "declaration": true,
     "skipLibCheck": true
   }
 }
