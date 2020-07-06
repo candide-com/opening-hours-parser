@@ -1,4 +1,3 @@
-import * as R from "ramda"
 import {OpenSpan, PublicHoliday, Schedule, Day} from "./types"
 import {
   Token,
@@ -87,21 +86,17 @@ type TimeSpan = [
 
 const makeDayArray = (dayPart: DaySpan | Token<TokenKind.Day>): Array<Day> => {
   if ("length" in dayPart) {
-    return R.reduce<number, Array<Day>>(
-      (memo, item) => {
-        if (item < getDay(dayPart[0].text)) {
-          return memo
-        }
+    return [0, 1, 2, 3, 4, 5, 6].reduce((memo: Array<Day>, item: number) => {
+      if (item < getDay(dayPart[0].text)) {
+        return memo
+      }
 
-        if (item > getDay(dayPart[2].text)) {
-          return memo
-        }
+      if (item > getDay(dayPart[2].text)) {
+        return memo
+      }
 
-        return [...memo, item]
-      },
-      [],
-      R.times(R.add(0), 7),
-    )
+      return [...memo, item]
+    }, [])
   }
 
   return [getDay(dayPart.text)]
@@ -110,17 +105,14 @@ const makeDayArray = (dayPart: DaySpan | Token<TokenKind.Day>): Array<Day> => {
 const buildSchedule = (
   days: Array<Day>,
   timePart: Array<TimeSpan> | Token<TokenKind.DayOff> | undefined,
-) => {
+): ParsedSchedule => {
   if (timePart === undefined) {
-    return R.map(
-      (dayOfWeek) => ({
-        type: "open" as const,
-        dayOfWeek,
-        start: "00:00",
-        end: "00:00",
-      }),
-      days,
-    )
+    return days.map((dayOfWeek) => ({
+      type: "open" as const,
+      dayOfWeek,
+      start: "00:00",
+      end: "00:00",
+    }))
   }
 
   if ("kind" in timePart) {
@@ -134,24 +126,22 @@ const buildSchedule = (
     )
   }
 
-  return R.chain(
-    (dayOfWeek) =>
-      timePart.map((time) =>
-        dayOfWeek === PUBLIC_HOLIDAY_DAY
-          ? {
-              type: "publicHoliday" as const,
-              isOpen: true,
-              start: time[0].text,
-              end: time[2].text,
-            }
-          : {
-              type: "open" as const,
-              dayOfWeek,
-              start: time[0].text,
-              end: time[2].text,
-            },
-      ),
-    days,
+  return days.flatMap((dayOfWeek) =>
+    timePart.map((time) =>
+      dayOfWeek === PUBLIC_HOLIDAY_DAY
+        ? {
+            type: "publicHoliday" as const,
+            isOpen: true,
+            start: time[0].text,
+            end: time[2].text,
+          }
+        : {
+            type: "open" as const,
+            dayOfWeek,
+            start: time[0].text,
+            end: time[2].text,
+          },
+    ),
   )
 }
 
@@ -159,20 +149,18 @@ const combineSchedules = (
   prevSchedule: ParsedSchedule,
   nextSchedule: ParsedSchedule,
 ) => {
-  return R.flatten([
-    R.reject(
+  return [
+    prevSchedule.filter(
       (oldSpan) =>
-        R.any(
+        !nextSchedule.some(
           (newSpan) =>
             "dayOfWeek" in newSpan &&
             "dayOfWeek" in oldSpan &&
             newSpan.dayOfWeek === oldSpan.dayOfWeek,
-          nextSchedule,
         ),
-      prevSchedule,
     ),
     nextSchedule,
-  ])
+  ].flat()
 }
 
 const EXPR = rule<TokenKind, ParsedSchedule>()

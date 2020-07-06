@@ -1,7 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.parse = void 0;
-const R = require("ramda");
 const types_1 = require("./types");
 const typescript_parsec_1 = require("typescript-parsec");
 const PUBLIC_HOLIDAY_DAY = 8;
@@ -47,7 +46,7 @@ const lexer = typescript_parsec_1.buildLexer([
 ]);
 const makeDayArray = (dayPart) => {
     if ("length" in dayPart) {
-        return R.reduce((memo, item) => {
+        return [0, 1, 2, 3, 4, 5, 6].reduce((memo, item) => {
             if (item < getDay(dayPart[0].text)) {
                 return memo;
             }
@@ -55,18 +54,18 @@ const makeDayArray = (dayPart) => {
                 return memo;
             }
             return [...memo, item];
-        }, [], R.times(R.add(0), 7));
+        }, []);
     }
     return [getDay(dayPart.text)];
 };
 const buildSchedule = (days, timePart) => {
     if (timePart === undefined) {
-        return R.map((dayOfWeek) => ({
+        return days.map((dayOfWeek) => ({
             type: "open",
             dayOfWeek,
             start: "00:00",
             end: "00:00",
-        }), days);
+        }));
     }
     if ("kind" in timePart) {
         return days.map((dayOfWeek) => dayOfWeek === PUBLIC_HOLIDAY_DAY
@@ -76,7 +75,7 @@ const buildSchedule = (days, timePart) => {
                 dayOfWeek,
             });
     }
-    return R.chain((dayOfWeek) => timePart.map((time) => dayOfWeek === PUBLIC_HOLIDAY_DAY
+    return days.flatMap((dayOfWeek) => timePart.map((time) => dayOfWeek === PUBLIC_HOLIDAY_DAY
         ? {
             type: "publicHoliday",
             isOpen: true,
@@ -88,15 +87,15 @@ const buildSchedule = (days, timePart) => {
             dayOfWeek,
             start: time[0].text,
             end: time[2].text,
-        }), days);
+        }));
 };
 const combineSchedules = (prevSchedule, nextSchedule) => {
-    return R.flatten([
-        R.reject((oldSpan) => R.any((newSpan) => "dayOfWeek" in newSpan &&
+    return [
+        prevSchedule.filter((oldSpan) => !nextSchedule.some((newSpan) => "dayOfWeek" in newSpan &&
             "dayOfWeek" in oldSpan &&
-            newSpan.dayOfWeek === oldSpan.dayOfWeek, nextSchedule), prevSchedule),
+            newSpan.dayOfWeek === oldSpan.dayOfWeek)),
         nextSchedule,
-    ]);
+    ].flat();
 };
 const EXPR = typescript_parsec_1.rule();
 const SCHED = typescript_parsec_1.rule();
