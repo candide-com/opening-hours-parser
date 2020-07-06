@@ -38,11 +38,52 @@ describe("parse a single expression", () => {
   context("day range", () => {
     it("Mo-Fr", () => {
       expect(parse("Mo-Fr")).to.eql([
-        {type: "open", dayOfWeek: 1, start: "00:00", end: "00:00"},
-        {type: "open", dayOfWeek: 2, start: "00:00", end: "00:00"},
-        {type: "open", dayOfWeek: 3, start: "00:00", end: "00:00"},
-        {type: "open", dayOfWeek: 4, start: "00:00", end: "00:00"},
-        {type: "open", dayOfWeek: 5, start: "00:00", end: "00:00"},
+        {type: "open", dayOfWeek: 1, start: "00:00", end: "24:00"},
+        {type: "open", dayOfWeek: 2, start: "00:00", end: "24:00"},
+        {type: "open", dayOfWeek: 3, start: "00:00", end: "24:00"},
+        {type: "open", dayOfWeek: 4, start: "00:00", end: "24:00"},
+        {type: "open", dayOfWeek: 5, start: "00:00", end: "24:00"},
+      ])
+    })
+
+    it("Fr-Su", () => {
+      expect(parse("Fr-Su")).to.eql([
+        {type: "open", dayOfWeek: 5, start: "00:00", end: "24:00"},
+        {type: "open", dayOfWeek: 6, start: "00:00", end: "24:00"},
+        {type: "open", dayOfWeek: 0, start: "00:00", end: "24:00"},
+      ])
+    })
+
+    it("Sa-Fr", () => {
+      expect(parse("Sa-Fr")).to.eql([
+        {type: "open", dayOfWeek: 6, start: "00:00", end: "24:00"},
+        {type: "open", dayOfWeek: 0, start: "00:00", end: "24:00"},
+        {type: "open", dayOfWeek: 1, start: "00:00", end: "24:00"},
+        {type: "open", dayOfWeek: 2, start: "00:00", end: "24:00"},
+        {type: "open", dayOfWeek: 3, start: "00:00", end: "24:00"},
+        {type: "open", dayOfWeek: 4, start: "00:00", end: "24:00"},
+        {type: "open", dayOfWeek: 5, start: "00:00", end: "24:00"},
+      ])
+    })
+  })
+
+  context("multiple days", () => {
+    it("Mo,Tu", () => {
+      expect(parse("Mo,Tu")).to.eql([
+        {type: "open", dayOfWeek: 1, start: "00:00", end: "24:00"},
+        {type: "open", dayOfWeek: 2, start: "00:00", end: "24:00"},
+      ])
+    })
+
+    it("24/7", () => {
+      expect(parse("24/7")).to.eql([
+        {type: "open", dayOfWeek: 0, start: "00:00", end: "24:00"},
+        {type: "open", dayOfWeek: 1, start: "00:00", end: "24:00"},
+        {type: "open", dayOfWeek: 2, start: "00:00", end: "24:00"},
+        {type: "open", dayOfWeek: 3, start: "00:00", end: "24:00"},
+        {type: "open", dayOfWeek: 4, start: "00:00", end: "24:00"},
+        {type: "open", dayOfWeek: 5, start: "00:00", end: "24:00"},
+        {type: "open", dayOfWeek: 6, start: "00:00", end: "24:00"},
       ])
     })
   })
@@ -75,8 +116,8 @@ describe("parse two expressions", () => {
   context("overlapping day range and day range plus time range", () => {
     it("Su-We; Tu-Th 10:00-18:00", () => {
       expect(parse("Su-We; Tu-Th 10:00-18:00")).to.eql([
-        {type: "open", dayOfWeek: 0, start: "00:00", end: "00:00"},
-        {type: "open", dayOfWeek: 1, start: "00:00", end: "00:00"},
+        {type: "open", dayOfWeek: 0, start: "00:00", end: "24:00"},
+        {type: "open", dayOfWeek: 1, start: "00:00", end: "24:00"},
         {type: "open", dayOfWeek: 2, start: "10:00", end: "18:00"},
         {type: "open", dayOfWeek: 3, start: "10:00", end: "18:00"},
         {type: "open", dayOfWeek: 4, start: "10:00", end: "18:00"},
@@ -106,22 +147,22 @@ describe("parse two expressions", () => {
   context("day range plus public holdays", () => {
     it("Mo-Fr; PH off", () => {
       expect(parse("Mo-Fr; PH off")).to.eql([
-        {type: "open", dayOfWeek: 1, start: "00:00", end: "00:00"},
-        {type: "open", dayOfWeek: 2, start: "00:00", end: "00:00"},
-        {type: "open", dayOfWeek: 3, start: "00:00", end: "00:00"},
-        {type: "open", dayOfWeek: 4, start: "00:00", end: "00:00"},
-        {type: "open", dayOfWeek: 5, start: "00:00", end: "00:00"},
+        {type: "open", dayOfWeek: 1, start: "00:00", end: "24:00"},
+        {type: "open", dayOfWeek: 2, start: "00:00", end: "24:00"},
+        {type: "open", dayOfWeek: 3, start: "00:00", end: "24:00"},
+        {type: "open", dayOfWeek: 4, start: "00:00", end: "24:00"},
+        {type: "open", dayOfWeek: 5, start: "00:00", end: "24:00"},
         {type: "publicHoliday", isOpen: false},
       ])
     })
 
     it("Mo-Fr; PH 08:00-12:00", () => {
       expect(parse("Mo-Fr; PH 08:00-12:00")).to.eql([
-        {type: "open", dayOfWeek: 1, start: "00:00", end: "00:00"},
-        {type: "open", dayOfWeek: 2, start: "00:00", end: "00:00"},
-        {type: "open", dayOfWeek: 3, start: "00:00", end: "00:00"},
-        {type: "open", dayOfWeek: 4, start: "00:00", end: "00:00"},
-        {type: "open", dayOfWeek: 5, start: "00:00", end: "00:00"},
+        {type: "open", dayOfWeek: 1, start: "00:00", end: "24:00"},
+        {type: "open", dayOfWeek: 2, start: "00:00", end: "24:00"},
+        {type: "open", dayOfWeek: 3, start: "00:00", end: "24:00"},
+        {type: "open", dayOfWeek: 4, start: "00:00", end: "24:00"},
+        {type: "open", dayOfWeek: 5, start: "00:00", end: "24:00"},
         {type: "publicHoliday", isOpen: true, start: "08:00", end: "12:00"},
       ])
     })
@@ -135,6 +176,17 @@ describe("parse three expressions", () => {
         {type: "open", dayOfWeek: 1, start: "08:00", end: "12:00"},
         {type: "open", dayOfWeek: 3, start: "08:00", end: "13:00"},
         {type: "open", dayOfWeek: 5, start: "08:00", end: "14:00"},
+      ])
+    })
+  })
+
+  context("Test from real life", () => {
+    it("We-Su; Fr,Sa off; ph 00:00-24:00", () => {
+      expect(parse("We-Su; Fr,Sa off; ph 00:00-24:00")).to.eql([
+        {type: "open", dayOfWeek: 3, start: "00:00", end: "24:00"},
+        {type: "open", dayOfWeek: 4, start: "00:00", end: "24:00"},
+        {type: "open", dayOfWeek: 0, start: "00:00", end: "24:00"},
+        {type: "publicHoliday", isOpen: true, start: "00:00", end: "24:00"},
       ])
     })
   })

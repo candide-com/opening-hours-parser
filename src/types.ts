@@ -43,5 +43,5 @@ export interface Options {
 }
 
 export interface OpeningHours {
-  isOpen(date: Date): boolean
+  isOpenOn(date: Date): boolean
 }

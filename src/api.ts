@@ -11,7 +11,7 @@ import * as moment from "moment-timezone"
 
 export const openingHours = (schedule: Schedule, options?: Options) => {
   const openingHours: OpeningHours = {
-    isOpen(date) {
+    isOpenOn(date) {
       const mDate =
         options !== undefined && options.timezone !== undefined
           ? moment(date).tz(options.timezone)

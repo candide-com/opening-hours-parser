@@ -18,18 +18,18 @@ import {
 const PUBLIC_HOLIDAY_DAY = 8
 
 const dayHash: Record<string, Day> = {
-  Su: Day.Sunday,
-  Mo: Day.Monday,
-  Tu: Day.Tuesday,
-  We: Day.Wednesday,
-  Th: Day.Thursday,
-  Fr: Day.Friday,
-  Sa: Day.Saturday,
+  SU: Day.Sunday,
+  MO: Day.Monday,
+  TU: Day.Tuesday,
+  WE: Day.Wednesday,
+  TH: Day.Thursday,
+  FR: Day.Friday,
+  SA: Day.Saturday,
   PH: PUBLIC_HOLIDAY_DAY,
 }
 
 function getDay(text: string): Day {
-  return dayHash[text] ?? Day.Monday
+  return dayHash[text.toUpperCase()] ?? Day.Monday
 }
 
 interface DayOff {
@@ -52,6 +52,7 @@ enum TokenKind {
   DayOff,
   Day,
   Time,
+  AllWeek,
 
   // Seprators
   To,
@@ -66,6 +67,7 @@ enum TokenKind {
 const lexer = buildLexer([
   [true, /^off/g, TokenKind.DayOff],
   [true, /^\w{2}/g, TokenKind.Day],
+  [true, /^24\/7/g, TokenKind.AllWeek],
   [true, /^\d{2}:\d{2}/g, TokenKind.Time],
 
   [true, /^-/g, TokenKind.To],
@@ -76,7 +78,13 @@ const lexer = buildLexer([
   [false, /^\s+/g, TokenKind.Space],
 ])
 
-type DaySpan = [Token<TokenKind.Day>, Token<TokenKind.To>, Token<TokenKind.Day>]
+type DaySpan =
+  | [Token<TokenKind.Day>, Token<TokenKind.To>, Token<TokenKind.Day>]
+  | [
+      Token<TokenKind.Day>,
+      Token<TokenKind.InternalSeperator>,
+      Token<TokenKind.Day>,
+    ]
 
 type TimeSpan = [
   Token<TokenKind.Time>,
@@ -84,19 +92,39 @@ type TimeSpan = [
   Token<TokenKind.Time>,
 ]
 
-const makeDayArray = (dayPart: DaySpan | Token<TokenKind.Day>): Array<Day> => {
+const makeDayArray = (
+  dayPart: DaySpan | Token<TokenKind.Day> | Token<TokenKind.AllWeek>,
+): Array<Day> => {
   if ("length" in dayPart) {
-    return [0, 1, 2, 3, 4, 5, 6].reduce((memo: Array<Day>, item: number) => {
-      if (item < getDay(dayPart[0].text)) {
-        return memo
-      }
+    if (dayPart[1].kind === TokenKind.InternalSeperator) {
+      return [getDay(dayPart[0].text), getDay(dayPart[2].text)]
+    }
 
-      if (item > getDay(dayPart[2].text)) {
-        return memo
-      }
+    const startDay = getDay(dayPart[0].text)
+    let endDay = getDay(dayPart[2].text)
 
-      return [...memo, item]
-    }, [])
+    if (endDay < startDay) {
+      endDay = endDay + 7
+    }
+
+    return [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13].reduce(
+      (memo: Array<Day>, item: number) => {
+        if (item < startDay) {
+          return memo
+        }
+
+        if (item > endDay) {
+          return memo
+        }
+
+        return [...memo, item > 6 ? item - 7 : item]
+      },
+      [],
+    )
+  }
+
+  if (dayPart.kind === TokenKind.AllWeek) {
+    return [0, 1, 2, 3, 4, 5, 6]
   }
 
   return [getDay(dayPart.text)]
@@ -111,7 +139,7 @@ const buildSchedule = (
       type: "open" as const,
       dayOfWeek,
       start: "00:00",
-      end: "00:00",
+      end: "24:00",
     }))
   }
 
@@ -172,7 +200,13 @@ EXPR.setPattern(
       apply(
         alt(
           seq(tok(TokenKind.Day), tok(TokenKind.To), tok(TokenKind.Day)),
+          seq(
+            tok(TokenKind.Day),
+            tok(TokenKind.InternalSeperator),
+            tok(TokenKind.Day),
+          ),
           tok(TokenKind.Day),
+          tok(TokenKind.AllWeek),
         ),
         makeDayArray,
       ),

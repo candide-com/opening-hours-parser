@@ -4,48 +4,58 @@ import {openingHours} from "../"
 describe("no timezone", () => {
   context("a time well within open times on an open day", () => {
     it("returns true", () => {
-      const {isOpen} = openingHours([
+      const {isOpenOn} = openingHours([
         {dayOfWeek: 1, start: "10:00", end: "14:00", type: "open"},
       ])
 
-      expect(isOpen(new Date("2020-01-06T12:00:00.000"))).to.eq(true)
+      expect(isOpenOn(new Date("2020-01-06T12:00:00.000"))).to.eq(true)
     })
   })
 
   context("times narrowly within open times on an open day", () => {
     it("returns true", () => {
-      const {isOpen} = openingHours([
+      const {isOpenOn} = openingHours([
         {dayOfWeek: 1, start: "10:00", end: "14:00", type: "open"},
       ])
 
-      expect(isOpen(new Date("2020-01-06T10:00:00.000"))).to.eq(true)
-      expect(isOpen(new Date("2020-01-06T14:00:00.000"))).to.eq(true)
+      expect(isOpenOn(new Date("2020-01-06T10:00:00.000"))).to.eq(true)
+      expect(isOpenOn(new Date("2020-01-06T14:00:00.000"))).to.eq(true)
+    })
+  })
+
+  context("a time well within open times on a full day", () => {
+    it("returns true", () => {
+      const {isOpenOn} = openingHours([
+        {dayOfWeek: 1, start: "00:00", end: "24:00", type: "open"},
+      ])
+
+      expect(isOpenOn(new Date("2020-01-06T12:00:00.000"))).to.eq(true)
     })
   })
 
   context("a time well outside open times on an open day", () => {
     it("returns true", () => {
-      const {isOpen} = openingHours([
+      const {isOpenOn} = openingHours([
         {dayOfWeek: 1, start: "10:00", end: "14:00", type: "open"},
       ])
 
-      expect(isOpen(new Date("2020-01-06T18:00:00.000"))).to.eq(false)
+      expect(isOpenOn(new Date("2020-01-06T18:00:00.000"))).to.eq(false)
     })
   })
 
   context("a time on a closed day", () => {
     it("returns false", () => {
-      const {isOpen} = openingHours([
+      const {isOpenOn} = openingHours([
         {dayOfWeek: 1, start: "10:00", end: "14:00", type: "open"},
       ])
 
-      expect(isOpen(new Date("2020-06-30T11:00:00.000"))).to.eq(false)
+      expect(isOpenOn(new Date("2020-06-30T11:00:00.000"))).to.eq(false)
     })
   })
 
   context("on a public holiday, when it's closed on a public holiday", () => {
     it("returns false", () => {
-      const {isOpen} = openingHours(
+      const {isOpenOn} = openingHours(
         [
           {dayOfWeek: 1, start: "10:00", end: "14:00", type: "open"},
           {type: "publicHoliday", isOpen: false},
@@ -53,13 +63,13 @@ describe("no timezone", () => {
         {publicHolidays: ["2020-01-06"]},
       )
 
-      expect(isOpen(new Date("2020-01-06T11:00:00.000"))).to.eq(false)
+      expect(isOpenOn(new Date("2020-01-06T11:00:00.000"))).to.eq(false)
     })
   })
 
   context("on a public holiday, when it's open on a public holiday", () => {
     it("returns false", () => {
-      const {isOpen} = openingHours(
+      const {isOpenOn} = openingHours(
         [
           {dayOfWeek: 1, start: "10:00", end: "14:00", type: "open"},
           {type: "publicHoliday", isOpen: true, start: "10:00", end: "18:00"},
@@ -67,7 +77,7 @@ describe("no timezone", () => {
         {publicHolidays: ["2020-01-06"]},
       )
 
-      expect(isOpen(new Date("2020-01-06T17:00:00.000"))).to.eq(true)
+      expect(isOpenOn(new Date("2020-01-06T17:00:00.000"))).to.eq(true)
     })
   })
 })
@@ -75,24 +85,24 @@ describe("no timezone", () => {
 describe("with timezone", () => {
   context("a time well within open times on an open day", () => {
     it("returns true", () => {
-      const {isOpen} = openingHours(
+      const {isOpenOn} = openingHours(
         [{dayOfWeek: 1, start: "10:00", end: "14:00", type: "open"}],
         {timezone: "Europe/Berlin"},
       )
 
-      expect(isOpen(new Date("2020-01-06T12:00:00.000"))).to.eq(true)
+      expect(isOpenOn(new Date("2020-01-06T12:00:00.000"))).to.eq(true)
     })
   })
 
   context("times narrowly within open times on an open day", () => {
     it("returns true", () => {
-      const {isOpen} = openingHours(
+      const {isOpenOn} = openingHours(
         [{dayOfWeek: 1, start: "10:00", end: "14:00", type: "open"}],
         {timezone: "Europe/Berlin"},
       )
 
-      expect(isOpen(new Date("2020-01-06T09:00:00.000"))).to.eq(true)
-      expect(isOpen(new Date("2020-01-06T13:00:00.000"))).to.eq(true)
+      expect(isOpenOn(new Date("2020-01-06T09:00:00.000"))).to.eq(true)
+      expect(isOpenOn(new Date("2020-01-06T13:00:00.000"))).to.eq(true)
     })
   })
 })

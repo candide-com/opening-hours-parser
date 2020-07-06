@@ -5,7 +5,7 @@ const types_1 = require("./types");
 const moment = require("moment-timezone");
 exports.openingHours = (schedule, options) => {
     const openingHours = {
-        isOpen(date) {
+        isOpenOn(date) {
             const mDate = options !== undefined && options.timezone !== undefined
                 ? moment(date).tz(options.timezone)
                 : moment(date);

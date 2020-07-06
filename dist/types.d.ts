@@ -30,5 +30,5 @@ export interface Options {
     publicHolidays?: Array<string>;
 }
 export interface OpeningHours {
-    isOpen(date: Date): boolean;
+    isOpenOn(date: Date): boolean;
 }
