@@ -3,6 +3,7 @@
   "version": "1.0.1",
   "description": "Parses OpenStreetMap opening hours",
   "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "scripts": {
     "build": "rm -rf ./dist && rsync -a --exclude='*.ts' --prune-empty-dirs src/ dist/ && tsc --project tsconfig-build.json",
     "test:unit": "mocha --opts test/mocha.opts"
