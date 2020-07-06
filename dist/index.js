@@ -1,8 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const parser_1 = require("./parser");
-const api_1 = require("./api");
-exports.default = {
-    parse: parser_1.parse,
-    openingTimes: api_1.openingTimes,
-};
+var parser_1 = require("./parser");
+Object.defineProperty(exports, "parse", { enumerable: true, get: function () { return parser_1.parse; } });
+var api_1 = require("./api");
+Object.defineProperty(exports, "openingHours", { enumerable: true, get: function () { return api_1.openingHours; } });

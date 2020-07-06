@@ -1,7 +1,2 @@
-import {parse} from "./parser"
-import {openingTimes} from "./api"
-
-export default {
-  parse,
-  openingTimes,
-}
+export {parse} from "./parser"
+export {openingHours} from "./api"

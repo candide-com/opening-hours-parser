@@ -36,3 +36,12 @@ export const isPublicHoliday = (
 
 export const isOpenSpan = (span: OpenSpan | PublicHoliday): span is OpenSpan =>
   (span as OpenSpan).type === "open"
+
+export interface Options {
+  timezone?: string
+  publicHolidays?: Array<string>
+}
+
+export interface OpeningHours {
+  isOpen(date: Date): boolean
+}

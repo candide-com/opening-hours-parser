@@ -1,5 +1,5 @@
 import {expect} from "chai"
-import {parse} from "../parser"
+import {parse} from "../"
 
 describe("parse a single expression", () => {
   context("some nonsense", () => {

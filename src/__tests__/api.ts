@@ -1,10 +1,10 @@
 import {expect} from "chai"
-import {openingTimes} from "../api"
+import {openingHours} from "../"
 
 describe("no timezone", () => {
   context("a time well within open times on an open day", () => {
     it("returns true", () => {
-      const {isOpen} = openingTimes([
+      const {isOpen} = openingHours([
         {dayOfWeek: 1, start: "10:00", end: "14:00", type: "open"},
       ])
 
@@ -14,7 +14,7 @@ describe("no timezone", () => {
 
   context("times narrowly within open times on an open day", () => {
     it("returns true", () => {
-      const {isOpen} = openingTimes([
+      const {isOpen} = openingHours([
         {dayOfWeek: 1, start: "10:00", end: "14:00", type: "open"},
       ])
 
@@ -25,7 +25,7 @@ describe("no timezone", () => {
 
   context("a time well outside open times on an open day", () => {
     it("returns true", () => {
-      const {isOpen} = openingTimes([
+      const {isOpen} = openingHours([
         {dayOfWeek: 1, start: "10:00", end: "14:00", type: "open"},
       ])
 
@@ -35,7 +35,7 @@ describe("no timezone", () => {
 
   context("a time on a closed day", () => {
     it("returns false", () => {
-      const {isOpen} = openingTimes([
+      const {isOpen} = openingHours([
         {dayOfWeek: 1, start: "10:00", end: "14:00", type: "open"},
       ])
 
@@ -45,7 +45,7 @@ describe("no timezone", () => {
 
   context("on a public holiday, when it's closed on a public holiday", () => {
     it("returns false", () => {
-      const {isOpen} = openingTimes(
+      const {isOpen} = openingHours(
         [
           {dayOfWeek: 1, start: "10:00", end: "14:00", type: "open"},
           {type: "publicHoliday", isOpen: false},
@@ -59,7 +59,7 @@ describe("no timezone", () => {
 
   context("on a public holiday, when it's open on a public holiday", () => {
     it("returns false", () => {
-      const {isOpen} = openingTimes(
+      const {isOpen} = openingHours(
         [
           {dayOfWeek: 1, start: "10:00", end: "14:00", type: "open"},
           {type: "publicHoliday", isOpen: true, start: "10:00", end: "18:00"},
@@ -75,7 +75,7 @@ describe("no timezone", () => {
 describe("with timezone", () => {
   context("a time well within open times on an open day", () => {
     it("returns true", () => {
-      const {isOpen} = openingTimes(
+      const {isOpen} = openingHours(
         [{dayOfWeek: 1, start: "10:00", end: "14:00", type: "open"}],
         {timezone: "Europe/Berlin"},
       )
@@ -86,7 +86,7 @@ describe("with timezone", () => {
 
   context("times narrowly within open times on an open day", () => {
     it("returns true", () => {
-      const {isOpen} = openingTimes(
+      const {isOpen} = openingHours(
         [{dayOfWeek: 1, start: "10:00", end: "14:00", type: "open"}],
         {timezone: "Europe/Berlin"},
       )
