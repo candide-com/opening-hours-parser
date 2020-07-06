@@ -1,0 +1,5 @@
+--require ts-node/register
+--watch-extensions ts
+--reporter spec
+--ui bdd
+src/**/__tests__/*.ts
