@@ -5,12 +5,12 @@
   "main": "dist/index.js",
   "scripts": {
     "build": "rm -rf ./dist && rsync -a --exclude='*.ts' --prune-empty-dirs src/ dist/ && tsc --project tsconfig-build.json",
-    "start": "node dist/index.js",
-    "start-ts": "ts-node src/index.ts",
     "test:unit": "mocha --opts test/mocha.opts"
   },
-  "pre-commit": ["build"],
-  "author": "",
+  "pre-commit": [
+    "build"
+  ],
+  "author": "Mark Withers",
   "license": "ISC",
   "dependencies": {
     "ramda": "^0.27.0",
