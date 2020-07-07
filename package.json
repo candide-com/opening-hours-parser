@@ -1,6 +1,6 @@
 {
   "name": "@candide/opening-hours-parser",
-  "version": "4.0.0",
+  "version": "4.1.0",
   "description": "Parses OpenStreetMap opening hours",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
