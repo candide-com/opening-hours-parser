@@ -7,21 +7,16 @@ import {
   Options,
   OpeningHours,
 } from "./types"
-import * as moment from "moment-timezone"
+import {getISODay, format} from "date-fns"
 
 export const openingHours = (schedule: Schedule, options?: Options) => {
   const openingHours: OpeningHours = {
     isOpenOn(date) {
-      const mDate =
-        options !== undefined && options.timezone !== undefined
-          ? moment(date).tz(options.timezone)
-          : moment(date)
-
-      const hoursAndMinutes = mDate.format("HH:mm")
+      const hoursAndMinutes = format(date, "HH:mm")
 
       const span = schedule.find(
         (span): span is OpenSpan =>
-          isOpenSpan(span) && span.dayOfWeek === mDate.isoWeekday(),
+          isOpenSpan(span) && span.dayOfWeek === getISODay(date),
       )
 
       const holidayRule = schedule.find((span): span is PublicHoliday =>
@@ -33,7 +28,7 @@ export const openingHours = (schedule: Schedule, options?: Options) => {
         options.publicHolidays !== undefined &&
         holidayRule !== undefined &&
         options.publicHolidays.some(
-          (holiday) => holiday === mDate.format("YYYY-MM-DD"),
+          (holiday) => holiday === format(date, "yyyy-MM-dd"),
         )
       ) {
         if (holidayRule !== undefined && holidayRule.isOpen === false) {

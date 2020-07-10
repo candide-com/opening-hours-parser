@@ -26,7 +26,6 @@ export declare type Schedule = Array<OpenSpan | PublicHoliday>;
 export declare const isPublicHoliday: (span: OpenSpan | PublicHoliday) => span is PublicHoliday;
 export declare const isOpenSpan: (span: OpenSpan | PublicHoliday) => span is OpenSpan;
 export interface Options {
-    timezone?: string;
     publicHolidays?: Array<string>;
 }
 export interface OpeningHours {

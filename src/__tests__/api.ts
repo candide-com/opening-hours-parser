@@ -83,28 +83,3 @@ describe("no timezone", () => {
     })
   })
 })
-
-describe("with timezone", () => {
-  context("a time well within open times on an open day", () => {
-    it("returns true", () => {
-      const {isOpenOn} = openingHours(
-        [{dayOfWeek: 1, start: "10:00", end: "14:00", type: "open"}],
-        {timezone: "Europe/Berlin"},
-      )
-
-      expect(isOpenOn(new Date("2020-01-06T12:00:00.000"))).to.eq(true)
-    })
-  })
-
-  context("times narrowly within open times on an open day", () => {
-    it("returns true", () => {
-      const {isOpenOn} = openingHours(
-        [{dayOfWeek: 1, start: "10:00", end: "14:00", type: "open"}],
-        {timezone: "Europe/Berlin"},
-      )
-
-      expect(isOpenOn(new Date("2020-01-06T09:00:00.000"))).to.eq(true)
-      expect(isOpenOn(new Date("2020-01-06T13:00:00.000"))).to.eq(true)
-    })
-  })
-})

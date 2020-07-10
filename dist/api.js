@@ -2,20 +2,17 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.openingHours = void 0;
 const types_1 = require("./types");
-const moment = require("moment-timezone");
+const date_fns_1 = require("date-fns");
 exports.openingHours = (schedule, options) => {
     const openingHours = {
         isOpenOn(date) {
-            const mDate = options !== undefined && options.timezone !== undefined
-                ? moment(date).tz(options.timezone)
-                : moment(date);
-            const hoursAndMinutes = mDate.format("HH:mm");
-            const span = schedule.find((span) => types_1.isOpenSpan(span) && span.dayOfWeek === mDate.isoWeekday());
+            const hoursAndMinutes = date_fns_1.format(date, "HH:mm");
+            const span = schedule.find((span) => types_1.isOpenSpan(span) && span.dayOfWeek === date_fns_1.getISODay(date));
             const holidayRule = schedule.find((span) => types_1.isPublicHoliday(span));
             if (options !== undefined &&
                 options.publicHolidays !== undefined &&
                 holidayRule !== undefined &&
-                options.publicHolidays.some((holiday) => holiday === mDate.format("YYYY-MM-DD"))) {
+                options.publicHolidays.some((holiday) => holiday === date_fns_1.format(date, "yyyy-MM-dd"))) {
                 if (holidayRule !== undefined && holidayRule.isOpen === false) {
                     return false;
                 }
