@@ -6,6 +6,10 @@ describe("parse a single expression", () => {
     it("throws an error", () => {
       expect(() => parse("not a schedule")).to.throw()
     })
+
+    it("empty string", () => {
+      expect(parse("")).to.eql([])
+    })
   })
 
   context("day range and time range", () => {

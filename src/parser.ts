@@ -324,7 +324,12 @@ SCHED.setPattern(
   ),
 )
 
-export const parse = (pattern: string): Schedule =>
-  removeDaysOff(
+export const parse = (pattern: string): Schedule => {
+  if (pattern.trim() === "") {
+    return []
+  }
+
+  return removeDaysOff(
     expectSingleResult(expectEOF(SCHED.parse(lexer.parse(pattern)))),
   )
+}
