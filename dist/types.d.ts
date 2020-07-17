@@ -7,11 +7,27 @@ export declare enum Day {
     Saturday = 6,
     Sunday = 7
 }
+export declare enum Month {
+    January = 1,
+    February = 2,
+    March = 3,
+    April = 4,
+    May = 5,
+    June = 6,
+    July = 7,
+    August = 8,
+    September = 9,
+    October = 10,
+    November = 11,
+    December = 12
+}
 export interface OpenSpan {
     type: "open";
     dayOfWeek: Day;
     start: string;
     end: string;
+    startDay?: string;
+    endDay?: string;
 }
 export declare type PublicHoliday = {
     type: "publicHoliday";

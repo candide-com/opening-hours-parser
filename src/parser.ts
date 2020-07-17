@@ -1,4 +1,4 @@
-import {OpenSpan, PublicHoliday, Schedule, Day} from "./types"
+import {OpenSpan, PublicHoliday, Schedule, Day, Month} from "./types"
 import {
   Token,
   alt,
@@ -28,8 +28,27 @@ const dayHash: Record<string, Day> = {
   PH: PUBLIC_HOLIDAY_DAY,
 }
 
+const monthHash: Record<string, Month> = {
+  JAN: Month.January,
+  FEB: Month.February,
+  MAR: Month.March,
+  APR: Month.April,
+  MAY: Month.May,
+  JUN: Month.June,
+  JUL: Month.July,
+  AUG: Month.August,
+  SEP: Month.September,
+  OCT: Month.October,
+  NOV: Month.November,
+  DEC: Month.December,
+}
+
 function getDay(text: string): Day {
   return dayHash[text.toUpperCase()] ?? Day.Monday
+}
+
+function getMonth(text: string): Month {
+  return monthHash[text.toUpperCase()] ?? Month.January
 }
 
 interface DayOff {
@@ -49,9 +68,13 @@ type ParsedSchedule = Array<OpenSpan | PublicHoliday | DayOff>
 
 enum TokenKind {
   // Semantic
-  DayOff,
+  Month,
   Day,
+  Num,
   Time,
+
+  // Spcial cases
+  DayOff,
   AllWeek,
 
   // Seprators
@@ -60,21 +83,29 @@ enum TokenKind {
   InternalSeperator,
   EOF,
 
-  // No capture
+  // Non-capturing
   Space,
 }
 
+// Matches on longest string first, then earlier in array
 const lexer = buildLexer([
-  [true, /^off/g, TokenKind.DayOff],
-  [true, /^\w{2}/g, TokenKind.Day],
-  [true, /^24\/7/g, TokenKind.AllWeek],
+  // Number based
+  [true, /^\d{2}/g, TokenKind.Num],
   [true, /^\d{2}:\d{2}/g, TokenKind.Time],
+  [true, /^24\/7/g, TokenKind.AllWeek],
 
+  // Letter based
+  [true, /^off/g, TokenKind.DayOff], // has to be above Month to take priority
+  [true, /^[a-zA-Z]{3}/g, TokenKind.Month],
+  [true, /^[a-zA-Z]{2}/g, TokenKind.Day],
+
+  // Symbol based
   [true, /^-/g, TokenKind.To],
   [true, /^;/g, TokenKind.ExpressionSeperator],
   [true, /^,/g, TokenKind.InternalSeperator],
   [true, /^$/g, TokenKind.EOF],
 
+  // Non-capturing
   [false, /^\s+/g, TokenKind.Space],
 ])
 
@@ -93,8 +124,16 @@ type TimeSpan = [
 ]
 
 const makeDayArray = (
-  dayPart: DaySpan | Token<TokenKind.Day> | Token<TokenKind.AllWeek>,
+  dayPart:
+    | DaySpan
+    | Token<TokenKind.Day>
+    | Token<TokenKind.AllWeek>
+    | undefined,
 ): Array<Day> => {
+  if (dayPart === undefined) {
+    return [1, 2, 3, 4, 5, 6, 7]
+  }
+
   if ("length" in dayPart) {
     if (dayPart[1].kind === TokenKind.InternalSeperator) {
       return [getDay(dayPart[0].text), getDay(dayPart[2].text)]
@@ -130,7 +169,33 @@ const makeDayArray = (
   return [getDay(dayPart.text)]
 }
 
+const makeMonthPart = (
+  months:
+    | [
+        Token<TokenKind.Month>,
+        Token<TokenKind.Num>,
+        Token<TokenKind.To>,
+        Token<TokenKind.Month>,
+        Token<TokenKind.Num>,
+      ]
+    | undefined,
+): {startDay: string; endDay: string} | null => {
+  if (months === undefined) {
+    return null
+  }
+
+  return {
+    startDay: `${getMonth(months[0].text).toString().padStart(2, "0")}-${
+      months[1].text
+    }`,
+    endDay: `${getMonth(months[3].text).toString().padStart(2, "0")}-${
+      months[4].text
+    }`,
+  }
+}
+
 const buildSchedule = (
+  months: {startDay: string; endDay: string} | null,
   days: Array<Day>,
   timePart: Array<TimeSpan> | Token<TokenKind.DayOff> | undefined,
 ): ParsedSchedule => {
@@ -140,6 +205,7 @@ const buildSchedule = (
       dayOfWeek,
       start: "00:00",
       end: "24:00",
+      ...(months ?? {}),
     }))
   }
 
@@ -168,6 +234,7 @@ const buildSchedule = (
             dayOfWeek,
             start: time[0].text,
             end: time[2].text,
+            ...(months ?? {}),
           },
     ),
   )
@@ -199,6 +266,19 @@ EXPR.setPattern(
     seq(
       apply(
         alt(
+          seq(
+            tok(TokenKind.Month),
+            tok(TokenKind.Num),
+            tok(TokenKind.To),
+            tok(TokenKind.Month),
+            tok(TokenKind.Num),
+          ),
+          nil(),
+        ),
+        makeMonthPart,
+      ),
+      apply(
+        alt(
           seq(tok(TokenKind.Day), tok(TokenKind.To), tok(TokenKind.Day)),
           seq(
             tok(TokenKind.Day),
@@ -207,6 +287,7 @@ EXPR.setPattern(
           ),
           tok(TokenKind.Day),
           tok(TokenKind.AllWeek),
+          nil(),
         ),
         makeDayArray,
       ),
@@ -219,7 +300,8 @@ EXPR.setPattern(
         nil(),
       ),
     ),
-    ([dayPart, timePart]) => buildSchedule(dayPart, timePart),
+    ([monthPart, dayPart, timePart]) =>
+      buildSchedule(monthPart, dayPart, timePart),
   ),
 )
 

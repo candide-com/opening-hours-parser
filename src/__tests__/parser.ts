@@ -86,6 +86,18 @@ describe("parse a single expression", () => {
         {type: "open", dayOfWeek: 7, start: "00:00", end: "24:00"},
       ])
     })
+
+    it("00:00-24:00", () => {
+      expect(parse("00:00-24:00")).to.eql([
+        {type: "open", dayOfWeek: 1, start: "00:00", end: "24:00"},
+        {type: "open", dayOfWeek: 2, start: "00:00", end: "24:00"},
+        {type: "open", dayOfWeek: 3, start: "00:00", end: "24:00"},
+        {type: "open", dayOfWeek: 4, start: "00:00", end: "24:00"},
+        {type: "open", dayOfWeek: 5, start: "00:00", end: "24:00"},
+        {type: "open", dayOfWeek: 6, start: "00:00", end: "24:00"},
+        {type: "open", dayOfWeek: 7, start: "00:00", end: "24:00"},
+      ])
+    })
   })
 })
 
@@ -187,6 +199,71 @@ describe("parse three expressions", () => {
         {type: "open", dayOfWeek: 4, start: "00:00", end: "24:00"},
         {type: "open", dayOfWeek: 7, start: "00:00", end: "24:00"},
         {type: "publicHoliday", isOpen: true, start: "00:00", end: "24:00"},
+      ])
+    })
+  })
+})
+
+describe("Days of the year", () => {
+  context("Only open for a season, 1st Aug to 21st Oct", () => {
+    it("Aug 01 - Oct 31 00:00-24:00", () => {
+      expect(parse("Aug 01 - Oct 31 00:00-24:00")).to.eql([
+        {
+          type: "open",
+          dayOfWeek: 1,
+          start: "00:00",
+          end: "24:00",
+          startDay: "08-01",
+          endDay: "10-31",
+        },
+        {
+          type: "open",
+          dayOfWeek: 2,
+          start: "00:00",
+          end: "24:00",
+          startDay: "08-01",
+          endDay: "10-31",
+        },
+        {
+          type: "open",
+          dayOfWeek: 3,
+          start: "00:00",
+          end: "24:00",
+          startDay: "08-01",
+          endDay: "10-31",
+        },
+        {
+          type: "open",
+          dayOfWeek: 4,
+          start: "00:00",
+          end: "24:00",
+          startDay: "08-01",
+          endDay: "10-31",
+        },
+        {
+          type: "open",
+          dayOfWeek: 5,
+          start: "00:00",
+          end: "24:00",
+          startDay: "08-01",
+          endDay: "10-31",
+        },
+        {
+          type: "open",
+          dayOfWeek: 6,
+          start: "00:00",
+          end: "24:00",
+          startDay: "08-01",
+          endDay: "10-31",
+        },
+        {
+          type: "open",
+          dayOfWeek: 7,
+          start: "00:00",
+          end: "24:00",
+          startDay: "08-01",
+          endDay: "10-31",
+        },
       ])
     })
   })

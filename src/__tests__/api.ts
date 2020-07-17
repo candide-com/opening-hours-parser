@@ -55,6 +55,35 @@ describe("no timezone", () => {
     })
   })
 
+  context("lunch breaks", () => {
+    it("returns true in the morning", () => {
+      const {isOpenOn} = openingHours([
+        {dayOfWeek: 1, start: "10:00", end: "12:00", type: "open"},
+        {dayOfWeek: 1, start: "13:00", end: "17:00", type: "open"},
+      ])
+
+      expect(isOpenOn(new Date("2020-06-01T11:30:00.000"))).to.eq(true)
+    })
+
+    it("returns false at lunch", () => {
+      const {isOpenOn} = openingHours([
+        {dayOfWeek: 1, start: "10:00", end: "12:00", type: "open"},
+        {dayOfWeek: 1, start: "13:00", end: "17:00", type: "open"},
+      ])
+
+      expect(isOpenOn(new Date("2020-06-01T12:30:00.000"))).to.eq(false)
+    })
+
+    it("returns true in the afternoon", () => {
+      const {isOpenOn} = openingHours([
+        {dayOfWeek: 1, start: "10:00", end: "12:00", type: "open"},
+        {dayOfWeek: 1, start: "13:00", end: "17:00", type: "open"},
+      ])
+
+      expect(isOpenOn(new Date("2020-06-01T13:30:00.000"))).to.eq(true)
+    })
+  })
+
   context("on a public holiday, when it's closed on a public holiday", () => {
     it("returns false", () => {
       const {isOpenOn} = openingHours(
@@ -80,6 +109,23 @@ describe("no timezone", () => {
       )
 
       expect(isOpenOn(new Date("2020-01-06T17:00:00.000"))).to.eq(true)
+    })
+  })
+
+  context("out of season, when a season is specified", () => {
+    it("returns false", () => {
+      const {isOpenOn} = openingHours([
+        {
+          type: "open",
+          dayOfWeek: 1,
+          start: "10:00",
+          end: "14:00",
+          startDay: "08-01",
+          endDay: "10-31",
+        },
+      ])
+
+      expect(isOpenOn(new Date("2020-01-06T12:00:00.000"))).to.eq(false)
     })
   })
 })

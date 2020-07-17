@@ -13,8 +13,9 @@ export const openingHours = (schedule: Schedule, options?: Options) => {
   const openingHours: OpeningHours = {
     isOpenOn(date) {
       const hoursAndMinutes = format(date, "HH:mm")
+      const monthAndDay = format(date, "MM-dd")
 
-      const span = schedule.find(
+      const spans = schedule.filter(
         (span): span is OpenSpan =>
           isOpenSpan(span) && span.dayOfWeek === getISODay(date),
       )
@@ -44,11 +45,29 @@ export const openingHours = (schedule: Schedule, options?: Options) => {
         return false
       }
 
-      if (span === undefined) {
+      if (spans.length === 0) {
         return false
       }
 
-      if (hoursAndMinutes >= span.start && hoursAndMinutes <= span.end) {
+      const withinTimes = (span: OpenSpan) =>
+        hoursAndMinutes >= span.start && hoursAndMinutes <= span.end
+
+      const withinDays = (span: OpenSpan) =>
+        span.startDay !== undefined &&
+        span.endDay !== undefined &&
+        monthAndDay >= span.startDay &&
+        monthAndDay <= span.endDay
+
+      const noDaysSpecified = (span: OpenSpan) =>
+        span.startDay === undefined && span.endDay === undefined
+
+      if (
+        spans.some(
+          (span) =>
+            (withinTimes(span) && noDaysSpecified(span)) ||
+            (withinTimes(span) && withinDays(span)),
+        )
+      ) {
         return true
       }
 

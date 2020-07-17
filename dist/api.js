@@ -7,7 +7,8 @@ exports.openingHours = (schedule, options) => {
     const openingHours = {
         isOpenOn(date) {
             const hoursAndMinutes = date_fns_1.format(date, "HH:mm");
-            const span = schedule.find((span) => types_1.isOpenSpan(span) && span.dayOfWeek === date_fns_1.getISODay(date));
+            const monthAndDay = date_fns_1.format(date, "MM-dd");
+            const spans = schedule.filter((span) => types_1.isOpenSpan(span) && span.dayOfWeek === date_fns_1.getISODay(date));
             const holidayRule = schedule.find((span) => types_1.isPublicHoliday(span));
             if (options !== undefined &&
                 options.publicHolidays !== undefined &&
@@ -22,10 +23,17 @@ exports.openingHours = (schedule, options) => {
                 }
                 return false;
             }
-            if (span === undefined) {
+            if (spans.length === 0) {
                 return false;
             }
-            if (hoursAndMinutes >= span.start && hoursAndMinutes <= span.end) {
+            const withinTimes = (span) => hoursAndMinutes >= span.start && hoursAndMinutes <= span.end;
+            const withinDays = (span) => span.startDay !== undefined &&
+                span.endDay !== undefined &&
+                monthAndDay >= span.startDay &&
+                monthAndDay <= span.endDay;
+            const noDaysSpecified = (span) => span.startDay === undefined && span.endDay === undefined;
+            if (spans.some((span) => (withinTimes(span) && noDaysSpecified(span)) ||
+                (withinTimes(span) && withinDays(span)))) {
                 return true;
             }
             return false;
