@@ -56,6 +56,16 @@ interface DayOff {
   dayOfWeek: Day
 }
 
+interface DayRange {
+  startDay: string
+  endDay: string
+}
+
+interface TimeSpan {
+  startTime: string
+  endTime: string
+}
+
 const isDayOff = (span: OpenSpan | PublicHoliday | DayOff): span is DayOff =>
   (span as DayOff).type === "off"
 
@@ -109,38 +119,29 @@ const lexer = buildLexer([
   [false, /^\s+/g, TokenKind.Space],
 ])
 
-type DaySpan =
-  | [Token<TokenKind.Day>, Token<TokenKind.To>, Token<TokenKind.Day>]
-  | [
-      Token<TokenKind.Day>,
-      Token<TokenKind.InternalSeperator>,
-      Token<TokenKind.Day>,
-    ]
-
-type TimeSpan = [
-  Token<TokenKind.Time>,
-  Token<TokenKind.To>,
-  Token<TokenKind.Time>,
-]
-
 const makeDayArray = (
-  dayPart:
-    | DaySpan
+  dayTokens:
+    | [Token<TokenKind.Day>, Token<TokenKind.To>, Token<TokenKind.Day>]
+    | [
+        Token<TokenKind.Day>,
+        Token<TokenKind.InternalSeperator>,
+        Token<TokenKind.Day>,
+      ]
     | Token<TokenKind.Day>
     | Token<TokenKind.AllWeek>
     | undefined,
 ): Array<Day> => {
-  if (dayPart === undefined) {
+  if (dayTokens === undefined) {
     return [1, 2, 3, 4, 5, 6, 7]
   }
 
-  if ("length" in dayPart) {
-    if (dayPart[1].kind === TokenKind.InternalSeperator) {
-      return [getDay(dayPart[0].text), getDay(dayPart[2].text)]
+  if ("length" in dayTokens) {
+    if (dayTokens[1].kind === TokenKind.InternalSeperator) {
+      return [getDay(dayTokens[0].text), getDay(dayTokens[2].text)]
     }
 
-    const startDay = getDay(dayPart[0].text)
-    let endDay = getDay(dayPart[2].text)
+    const startDay = getDay(dayTokens[0].text)
+    let endDay = getDay(dayTokens[2].text)
 
     if (endDay < startDay) {
       endDay = endDay + 7
@@ -162,15 +163,15 @@ const makeDayArray = (
     )
   }
 
-  if (dayPart.kind === TokenKind.AllWeek) {
+  if (dayTokens.kind === TokenKind.AllWeek) {
     return [1, 2, 3, 4, 5, 6, 7]
   }
 
-  return [getDay(dayPart.text)]
+  return [getDay(dayTokens.text)]
 }
 
-const makeMonthPart = (
-  months:
+const makeMonthDefinition = (
+  monthTokens:
     | [
         Token<TokenKind.Month>,
         Token<TokenKind.Num>,
@@ -179,37 +180,47 @@ const makeMonthPart = (
         Token<TokenKind.Num>,
       ]
     | undefined,
-): {startDay: string; endDay: string} | null => {
-  if (months === undefined) {
+): DayRange | null => {
+  if (monthTokens === undefined) {
     return null
   }
 
   return {
-    startDay: `${getMonth(months[0].text).toString().padStart(2, "0")}-${
-      months[1].text
+    startDay: `${getMonth(monthTokens[0].text).toString().padStart(2, "0")}-${
+      monthTokens[1].text
     }`,
-    endDay: `${getMonth(months[3].text).toString().padStart(2, "0")}-${
-      months[4].text
+    endDay: `${getMonth(monthTokens[3].text).toString().padStart(2, "0")}-${
+      monthTokens[4].text
     }`,
   }
 }
 
-const buildSchedule = (
-  months: {startDay: string; endDay: string} | null,
-  days: Array<Day>,
-  timePart: Array<TimeSpan> | Token<TokenKind.DayOff> | undefined,
-): ParsedSchedule => {
-  if (timePart === undefined) {
-    return days.map((dayOfWeek) => ({
-      type: "open" as const,
-      dayOfWeek,
-      startTime: "00:00",
-      endTime: "24:00",
-      ...(months ?? {}),
-    }))
+const makeTimesArray = (
+  timeTokens:
+    | Array<[Token<TokenKind.Time>, Token<TokenKind.To>, Token<TokenKind.Time>]>
+    | Token<TokenKind.DayOff>
+    | undefined,
+): Array<TimeSpan> | "day off" => {
+  if (timeTokens === undefined) {
+    return [{startTime: "00:00", endTime: "24:00"}]
   }
 
-  if ("kind" in timePart) {
+  if ("kind" in timeTokens) {
+    return "day off" as const
+  }
+
+  return timeTokens.map((time) => ({
+    startTime: time[0].text,
+    endTime: time[2].text,
+  }))
+}
+
+const buildSchedule = (
+  months: DayRange | null,
+  days: Array<Day>,
+  times: Array<TimeSpan> | "day off",
+): ParsedSchedule => {
+  if (times === "day off") {
     return days.map((dayOfWeek) =>
       dayOfWeek === PUBLIC_HOLIDAY_DAY
         ? {type: "publicHoliday" as const, isOpen: false as const}
@@ -221,19 +232,17 @@ const buildSchedule = (
   }
 
   return days.flatMap((dayOfWeek) =>
-    timePart.map((time) =>
+    times.map((time) =>
       dayOfWeek === PUBLIC_HOLIDAY_DAY
         ? {
             type: "publicHoliday" as const,
             isOpen: true,
-            startTime: time[0].text,
-            endTime: time[2].text,
+            ...(time ?? {}),
           }
         : {
             type: "open" as const,
             dayOfWeek,
-            startTime: time[0].text,
-            endTime: time[2].text,
+            ...(time ?? {}),
             ...(months ?? {}),
           },
     ),
@@ -275,7 +284,7 @@ EXPR.setPattern(
           ),
           nil(),
         ),
-        makeMonthPart,
+        makeMonthDefinition,
       ),
       apply(
         alt(
@@ -291,17 +300,19 @@ EXPR.setPattern(
         ),
         makeDayArray,
       ),
-      alt(
-        listSc(
-          seq(tok(TokenKind.Time), tok(TokenKind.To), tok(TokenKind.Time)),
-          tok(TokenKind.InternalSeperator),
+      apply(
+        alt(
+          listSc(
+            seq(tok(TokenKind.Time), tok(TokenKind.To), tok(TokenKind.Time)),
+            tok(TokenKind.InternalSeperator),
+          ),
+          tok(TokenKind.DayOff),
+          nil(),
         ),
-        tok(TokenKind.DayOff),
-        nil(),
+        makeTimesArray,
       ),
     ),
-    ([monthPart, dayPart, timePart]) =>
-      buildSchedule(monthPart, dayPart, timePart),
+    ([months, days, times]) => buildSchedule(months, days, times),
   ),
 )
 
