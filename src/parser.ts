@@ -179,6 +179,7 @@ const makeMonthDefinition = (
         Token<TokenKind.Month>,
         Token<TokenKind.Num>,
       ]
+    | [Token<TokenKind.Month>, Token<TokenKind.Num>]
     | undefined,
 ): DayRange | null => {
   if (monthTokens === undefined) {
@@ -189,9 +190,12 @@ const makeMonthDefinition = (
     startDay: `${getMonth(monthTokens[0].text).toString().padStart(2, "0")}-${
       monthTokens[1].text
     }`,
-    endDay: `${getMonth(monthTokens[3].text).toString().padStart(2, "0")}-${
-      monthTokens[4].text
-    }`,
+    endDay:
+      monthTokens.length === 2
+        ? "12-31"
+        : `${getMonth(monthTokens[3].text).toString().padStart(2, "0")}-${
+            monthTokens[4].text
+          }`,
   }
 }
 
@@ -282,6 +286,7 @@ EXPR.setPattern(
             tok(TokenKind.Month),
             tok(TokenKind.Num),
           ),
+          seq(tok(TokenKind.Month), tok(TokenKind.Num)),
           nil(),
         ),
         makeMonthDefinition,

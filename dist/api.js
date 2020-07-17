@@ -27,10 +27,14 @@ exports.openingHours = (schedule, options) => {
                 return false;
             }
             const withinTimes = (span) => hoursAndMinutes >= span.startTime && hoursAndMinutes <= span.endTime;
-            const withinDays = (span) => span.startDay !== undefined &&
+            const withinDays = (span) => (span.startDay !== undefined &&
                 span.endDay !== undefined &&
                 monthAndDay >= span.startDay &&
-                monthAndDay <= span.endDay;
+                monthAndDay <= span.endDay) ||
+                (span.startDay !== undefined &&
+                    span.endDay !== undefined &&
+                    span.endDay < span.startDay &&
+                    (monthAndDay >= span.startDay || monthAndDay <= span.endDay));
             const noDaysSpecified = (span) => span.startDay === undefined && span.endDay === undefined;
             if (spans.some((span) => (withinTimes(span) && noDaysSpecified(span)) ||
                 (withinTimes(span) && withinDays(span)))) {

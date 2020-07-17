@@ -53,10 +53,14 @@ export const openingHours = (schedule: Schedule, options?: Options) => {
         hoursAndMinutes >= span.startTime && hoursAndMinutes <= span.endTime
 
       const withinDays = (span: OpenSpan) =>
-        span.startDay !== undefined &&
-        span.endDay !== undefined &&
-        monthAndDay >= span.startDay &&
-        monthAndDay <= span.endDay
+        (span.startDay !== undefined &&
+          span.endDay !== undefined &&
+          monthAndDay >= span.startDay &&
+          monthAndDay <= span.endDay) ||
+        (span.startDay !== undefined &&
+          span.endDay !== undefined &&
+          span.endDay < span.startDay &&
+          (monthAndDay >= span.startDay || monthAndDay <= span.endDay))
 
       const noDaysSpecified = (span: OpenSpan) =>
         span.startDay === undefined && span.endDay === undefined

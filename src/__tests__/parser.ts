@@ -281,4 +281,19 @@ describe("Days of the year", () => {
       ])
     })
   })
+
+  context("Only open for a season, 1st Aug onwards", () => {
+    it("Aug 01 Mo 00:00-24:00", () => {
+      expect(parse("Aug 01 Mo 00:00-24:00")).to.eql([
+        {
+          type: "open",
+          dayOfWeek: 1,
+          startTime: "00:00",
+          endTime: "24:00",
+          startDay: "08-01",
+          endDay: "12-31",
+        },
+      ])
+    })
+  })
 })

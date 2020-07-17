@@ -133,4 +133,21 @@ describe("no timezone", () => {
       expect(isOpenOn(new Date("2020-01-06T12:00:00.000"))).to.eq(false)
     })
   })
+
+  context("season that wraps around end of the year", () => {
+    it("returns true", () => {
+      const {isOpenOn} = openingHours([
+        {
+          type: "open",
+          dayOfWeek: 1,
+          startTime: "10:00",
+          endTime: "14:00",
+          startDay: "10-31",
+          endDay: "03-01",
+        },
+      ])
+
+      expect(isOpenOn(new Date("2020-02-03T12:00:00.000"))).to.eq(true)
+    })
+  })
 })
