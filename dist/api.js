@@ -17,8 +17,8 @@ exports.openingHours = (schedule, options) => {
                 if (holidayRule !== undefined && holidayRule.isOpen === false) {
                     return false;
                 }
-                if (hoursAndMinutes >= holidayRule.start &&
-                    hoursAndMinutes <= holidayRule.end) {
+                if (hoursAndMinutes >= holidayRule.startTime &&
+                    hoursAndMinutes <= holidayRule.endTime) {
                     return true;
                 }
                 return false;
@@ -26,7 +26,7 @@ exports.openingHours = (schedule, options) => {
             if (spans.length === 0) {
                 return false;
             }
-            const withinTimes = (span) => hoursAndMinutes >= span.start && hoursAndMinutes <= span.end;
+            const withinTimes = (span) => hoursAndMinutes >= span.startTime && hoursAndMinutes <= span.endTime;
             const withinDays = (span) => span.startDay !== undefined &&
                 span.endDay !== undefined &&
                 monthAndDay >= span.startDay &&

@@ -26,8 +26,8 @@ export enum Month {
 export interface OpenSpan {
   type: "open"
   dayOfWeek: Day
-  start: string
-  end: string
+  startTime: string
+  endTime: string
   startDay?: string
   endDay?: string
 }
@@ -37,8 +37,8 @@ export type PublicHoliday = {
 } & (
   | {
       isOpen: true
-      start: string
-      end: string
+      startTime: string
+      endTime: string
     }
   | {
       isOpen: false

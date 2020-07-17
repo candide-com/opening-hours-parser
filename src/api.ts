@@ -37,8 +37,8 @@ export const openingHours = (schedule: Schedule, options?: Options) => {
         }
 
         if (
-          hoursAndMinutes >= holidayRule.start &&
-          hoursAndMinutes <= holidayRule.end
+          hoursAndMinutes >= holidayRule.startTime &&
+          hoursAndMinutes <= holidayRule.endTime
         ) {
           return true
         }
@@ -50,7 +50,7 @@ export const openingHours = (schedule: Schedule, options?: Options) => {
       }
 
       const withinTimes = (span: OpenSpan) =>
-        hoursAndMinutes >= span.start && hoursAndMinutes <= span.end
+        hoursAndMinutes >= span.startTime && hoursAndMinutes <= span.endTime
 
       const withinDays = (span: OpenSpan) =>
         span.startDay !== undefined &&

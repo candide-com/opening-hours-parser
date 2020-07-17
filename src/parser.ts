@@ -203,8 +203,8 @@ const buildSchedule = (
     return days.map((dayOfWeek) => ({
       type: "open" as const,
       dayOfWeek,
-      start: "00:00",
-      end: "24:00",
+      startTime: "00:00",
+      endTime: "24:00",
       ...(months ?? {}),
     }))
   }
@@ -226,14 +226,14 @@ const buildSchedule = (
         ? {
             type: "publicHoliday" as const,
             isOpen: true,
-            start: time[0].text,
-            end: time[2].text,
+            startTime: time[0].text,
+            endTime: time[2].text,
           }
         : {
             type: "open" as const,
             dayOfWeek,
-            start: time[0].text,
-            end: time[2].text,
+            startTime: time[0].text,
+            endTime: time[2].text,
             ...(months ?? {}),
           },
     ),

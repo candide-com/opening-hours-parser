@@ -113,7 +113,7 @@ const makeMonthPart = (months) => {
 };
 const buildSchedule = (months, days, timePart) => {
     if (timePart === undefined) {
-        return days.map((dayOfWeek) => (Object.assign({ type: "open", dayOfWeek, start: "00:00", end: "24:00" }, (months !== null && months !== void 0 ? months : {}))));
+        return days.map((dayOfWeek) => (Object.assign({ type: "open", dayOfWeek, startTime: "00:00", endTime: "24:00" }, (months !== null && months !== void 0 ? months : {}))));
     }
     if ("kind" in timePart) {
         return days.map((dayOfWeek) => dayOfWeek === PUBLIC_HOLIDAY_DAY
@@ -127,10 +127,10 @@ const buildSchedule = (months, days, timePart) => {
         ? {
             type: "publicHoliday",
             isOpen: true,
-            start: time[0].text,
-            end: time[2].text,
+            startTime: time[0].text,
+            endTime: time[2].text,
         }
-        : Object.assign({ type: "open", dayOfWeek, start: time[0].text, end: time[2].text }, (months !== null && months !== void 0 ? months : {}))));
+        : Object.assign({ type: "open", dayOfWeek, startTime: time[0].text, endTime: time[2].text }, (months !== null && months !== void 0 ? months : {}))));
 };
 const combineSchedules = (prevSchedule, nextSchedule) => {
     return [
