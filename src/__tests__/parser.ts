@@ -282,16 +282,213 @@ describe("Days of the year", () => {
     })
   })
 
-  context("Only open for a season, 1st Aug onwards", () => {
-    it("Aug 01 Mo 00:00-24:00", () => {
-      expect(parse("Aug 01 Mo 00:00-24:00")).to.eql([
+  context("Only open on a specific date", () => {
+    it("Aug 01 00:00-24:00", () => {
+      expect(parse("Aug 01 00:00-24:00")).to.eql([
         {
           type: "open",
           dayOfWeek: 1,
           startTime: "00:00",
           endTime: "24:00",
           startDay: "08-01",
-          endDay: "12-31",
+          endDay: "08-01",
+        },
+        {
+          type: "open",
+          dayOfWeek: 2,
+          startTime: "00:00",
+          endTime: "24:00",
+          startDay: "08-01",
+          endDay: "08-01",
+        },
+        {
+          type: "open",
+          dayOfWeek: 3,
+          startTime: "00:00",
+          endTime: "24:00",
+          startDay: "08-01",
+          endDay: "08-01",
+        },
+        {
+          type: "open",
+          dayOfWeek: 4,
+          startTime: "00:00",
+          endTime: "24:00",
+          startDay: "08-01",
+          endDay: "08-01",
+        },
+        {
+          type: "open",
+          dayOfWeek: 5,
+          startTime: "00:00",
+          endTime: "24:00",
+          startDay: "08-01",
+          endDay: "08-01",
+        },
+        {
+          type: "open",
+          dayOfWeek: 6,
+          startTime: "00:00",
+          endTime: "24:00",
+          startDay: "08-01",
+          endDay: "08-01",
+        },
+        {
+          type: "open",
+          dayOfWeek: 7,
+          startTime: "00:00",
+          endTime: "24:00",
+          startDay: "08-01",
+          endDay: "08-01",
+        },
+      ])
+    })
+  })
+
+  context("Only open on a specific date, with optional colon", () => {
+    it("Aug 01: 00:00-24:00", () => {
+      expect(parse("Aug 01: 00:00-24:00")).to.eql([
+        {
+          type: "open",
+          dayOfWeek: 1,
+          startTime: "00:00",
+          endTime: "24:00",
+          startDay: "08-01",
+          endDay: "08-01",
+        },
+        {
+          type: "open",
+          dayOfWeek: 2,
+          startTime: "00:00",
+          endTime: "24:00",
+          startDay: "08-01",
+          endDay: "08-01",
+        },
+        {
+          type: "open",
+          dayOfWeek: 3,
+          startTime: "00:00",
+          endTime: "24:00",
+          startDay: "08-01",
+          endDay: "08-01",
+        },
+        {
+          type: "open",
+          dayOfWeek: 4,
+          startTime: "00:00",
+          endTime: "24:00",
+          startDay: "08-01",
+          endDay: "08-01",
+        },
+        {
+          type: "open",
+          dayOfWeek: 5,
+          startTime: "00:00",
+          endTime: "24:00",
+          startDay: "08-01",
+          endDay: "08-01",
+        },
+        {
+          type: "open",
+          dayOfWeek: 6,
+          startTime: "00:00",
+          endTime: "24:00",
+          startDay: "08-01",
+          endDay: "08-01",
+        },
+        {
+          type: "open",
+          dayOfWeek: 7,
+          startTime: "00:00",
+          endTime: "24:00",
+          startDay: "08-01",
+          endDay: "08-01",
+        },
+      ])
+    })
+  })
+
+  context("Only open for month", () => {
+    it("Aug 00:00-24:00", () => {
+      expect(parse("Aug 00:00-24:00")).to.eql([
+        {
+          type: "open",
+          dayOfWeek: 1,
+          startTime: "00:00",
+          endTime: "24:00",
+          startDay: "08-01",
+          endDay: "08-31",
+        },
+        {
+          type: "open",
+          dayOfWeek: 2,
+          startTime: "00:00",
+          endTime: "24:00",
+          startDay: "08-01",
+          endDay: "08-31",
+        },
+        {
+          type: "open",
+          dayOfWeek: 3,
+          startTime: "00:00",
+          endTime: "24:00",
+          startDay: "08-01",
+          endDay: "08-31",
+        },
+        {
+          type: "open",
+          dayOfWeek: 4,
+          startTime: "00:00",
+          endTime: "24:00",
+          startDay: "08-01",
+          endDay: "08-31",
+        },
+        {
+          type: "open",
+          dayOfWeek: 5,
+          startTime: "00:00",
+          endTime: "24:00",
+          startDay: "08-01",
+          endDay: "08-31",
+        },
+        {
+          type: "open",
+          dayOfWeek: 6,
+          startTime: "00:00",
+          endTime: "24:00",
+          startDay: "08-01",
+          endDay: "08-31",
+        },
+        {
+          type: "open",
+          dayOfWeek: 7,
+          startTime: "00:00",
+          endTime: "24:00",
+          startDay: "08-01",
+          endDay: "08-31",
+        },
+      ])
+    })
+  })
+
+  context("Open for two date ranges without overlap", () => {
+    it("Aug Mo 08:00-18:00; Sep Mo 10:00-18:00", () => {
+      expect(parse("Aug Mo 08:00-18:00; Sep Mo 10:00-18:00")).to.eql([
+        {
+          type: "open",
+          dayOfWeek: 1,
+          startTime: "08:00",
+          endTime: "18:00",
+          startDay: "08-01",
+          endDay: "08-31",
+        },
+        {
+          type: "open",
+          dayOfWeek: 1,
+          startTime: "10:00",
+          endTime: "18:00",
+          startDay: "09-01",
+          endDay: "09-30",
         },
       ])
     })

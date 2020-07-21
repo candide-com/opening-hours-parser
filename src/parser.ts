@@ -1,4 +1,11 @@
-import {OpenSpan, PublicHoliday, Schedule, Day, Month} from "./types"
+import {
+  OpenSpan,
+  PublicHoliday,
+  Schedule,
+  Day,
+  Month,
+  isOpenSpan,
+} from "./types"
 import {
   Token,
   alt,
@@ -43,12 +50,31 @@ const monthHash: Record<string, Month> = {
   DEC: Month.December,
 }
 
+const endDayOfMonthHash: Record<string, Month> = {
+  JAN: 31,
+  FEB: 29,
+  MAR: 31,
+  APR: 30,
+  MAY: 31,
+  JUN: 30,
+  JUL: 31,
+  AUG: 31,
+  SEP: 30,
+  OCT: 31,
+  NOV: 30,
+  DEC: 31,
+}
+
 function getDay(text: string): Day {
   return dayHash[text.toUpperCase()] ?? Day.Monday
 }
 
 function getMonth(text: string): Month {
   return monthHash[text.toUpperCase()] ?? Month.January
+}
+
+function getEndDayOfMonth(text: string): number {
+  return endDayOfMonthHash[text.toUpperCase()] ?? 31
 }
 
 interface DayOff {
@@ -95,6 +121,7 @@ enum TokenKind {
 
   // Non-capturing
   Space,
+  OptionalSeperator,
 }
 
 // Matches on longest string first, then earlier in array
@@ -117,6 +144,7 @@ const lexer = buildLexer([
 
   // Non-capturing
   [false, /^\s+/g, TokenKind.Space],
+  [false, /^:/g, TokenKind.OptionalSeperator],
 ])
 
 const makeDayArray = (
@@ -180,23 +208,37 @@ const makeMonthDefinition = (
         Token<TokenKind.Num>,
       ]
     | [Token<TokenKind.Month>, Token<TokenKind.Num>]
+    | Token<TokenKind.Month>
     | undefined,
 ): DayRange | null => {
   if (monthTokens === undefined) {
     return null
   }
 
-  return {
-    startDay: `${getMonth(monthTokens[0].text).toString().padStart(2, "0")}-${
-      monthTokens[1].text
-    }`,
-    endDay:
-      monthTokens.length === 2
-        ? "12-31"
-        : `${getMonth(monthTokens[3].text).toString().padStart(2, "0")}-${
-            monthTokens[4].text
-          }`,
+  if ("kind" in monthTokens) {
+    const startDay = `${getMonth(monthTokens.text)
+      .toString()
+      .padStart(2, "0")}-01`
+
+    const endDay = `${getMonth(monthTokens.text)
+      .toString()
+      .padStart(2, "0")}-${getEndDayOfMonth(monthTokens.text)}`
+
+    return {startDay, endDay}
   }
+
+  const startDay = `${getMonth(monthTokens[0].text)
+    .toString()
+    .padStart(2, "0")}-${monthTokens[1].text}`
+
+  const endDay =
+    monthTokens.length === 2
+      ? startDay
+      : `${getMonth(monthTokens[3].text).toString().padStart(2, "0")}-${
+          monthTokens[4].text
+        }`
+
+  return {startDay, endDay}
 }
 
 const makeTimesArray = (
@@ -253,6 +295,30 @@ const buildSchedule = (
   )
 }
 
+const coverSameDates = (
+  span1: OpenSpan | PublicHoliday | DayOff,
+  span2: OpenSpan | PublicHoliday | DayOff,
+): boolean => {
+  if (isDayOff(span1) || isDayOff(span2)) {
+    return true
+  }
+
+  if (!isOpenSpan(span1) || !isOpenSpan(span2)) {
+    return true
+  }
+
+  if (
+    span1.startDay === undefined ||
+    span1.endDay === undefined ||
+    span2.startDay === undefined ||
+    span2.endDay === undefined
+  ) {
+    return true
+  }
+
+  return span1.startDay === span2.startDay && span1.endDay === span2.endDay
+}
+
 const combineSchedules = (
   prevSchedule: ParsedSchedule,
   nextSchedule: ParsedSchedule,
@@ -264,7 +330,8 @@ const combineSchedules = (
           (newSpan) =>
             "dayOfWeek" in newSpan &&
             "dayOfWeek" in oldSpan &&
-            newSpan.dayOfWeek === oldSpan.dayOfWeek,
+            newSpan.dayOfWeek === oldSpan.dayOfWeek &&
+            coverSameDates(newSpan, oldSpan),
         ),
     ),
     nextSchedule,
@@ -287,6 +354,7 @@ EXPR.setPattern(
             tok(TokenKind.Num),
           ),
           seq(tok(TokenKind.Month), tok(TokenKind.Num)),
+          tok(TokenKind.Month),
           nil(),
         ),
         makeMonthDefinition,
