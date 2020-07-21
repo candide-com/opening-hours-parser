@@ -1,3 +1,2 @@
-export { parse } from "./parser";
-export { openingHours } from "./api";
+export { openingHours, parse } from "./api";
 export * from "./types";

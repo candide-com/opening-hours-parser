@@ -1,8 +1,17 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.openingHours = void 0;
+exports.openingHours = exports.parse = void 0;
 const types_1 = require("./types");
 const date_fns_1 = require("date-fns");
+const typescript_parsec_1 = require("typescript-parsec");
+const lexer_1 = require("./lexer");
+const parser_1 = require("./parser");
+exports.parse = (pattern) => {
+    if (pattern.trim() === "") {
+        return [];
+    }
+    return parser_1.removeDaysOff(typescript_parsec_1.expectSingleResult(typescript_parsec_1.expectEOF(parser_1.parser.parse(lexer_1.lexer.parse(pattern)))));
+};
 exports.openingHours = (schedule, options) => {
     const openingHours = {
         isOpenOn(date) {

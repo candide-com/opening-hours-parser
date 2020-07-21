@@ -8,6 +8,19 @@ import {
   OpeningHours,
 } from "./types"
 import {getISODay, format} from "date-fns"
+import {expectSingleResult, expectEOF} from "typescript-parsec"
+import {lexer} from "./lexer"
+import {removeDaysOff, parser} from "./parser"
+
+export const parse = (pattern: string): Schedule => {
+  if (pattern.trim() === "") {
+    return []
+  }
+
+  return removeDaysOff(
+    expectSingleResult(expectEOF(parser.parse(lexer.parse(pattern)))),
+  )
+}
 
 export const openingHours = (schedule: Schedule, options?: Options) => {
   const openingHours: OpeningHours = {

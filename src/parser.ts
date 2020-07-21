@@ -10,9 +10,6 @@ import {
   Token,
   alt,
   apply,
-  buildLexer,
-  expectEOF,
-  expectSingleResult,
   kright,
   list_sc as listSc,
   lrec_sc as lrecSc,
@@ -21,6 +18,7 @@ import {
   seq,
   tok,
 } from "typescript-parsec"
+import {TokenKind} from "./lexer"
 
 const PUBLIC_HOLIDAY_DAY = 8
 
@@ -95,57 +93,12 @@ interface TimeSpan {
 const isDayOff = (span: OpenSpan | PublicHoliday | DayOff): span is DayOff =>
   (span as DayOff).type === "off"
 
-const removeDaysOff = (
+export const removeDaysOff = (
   arr: Array<OpenSpan | PublicHoliday | DayOff>,
 ): Schedule =>
   arr.filter((span): span is OpenSpan | PublicHoliday => !isDayOff(span))
 
 type ParsedSchedule = Array<OpenSpan | PublicHoliday | DayOff>
-
-enum TokenKind {
-  // Semantic
-  Month,
-  Day,
-  Num,
-  Time,
-
-  // Spcial cases
-  DayOff,
-  AllWeek,
-
-  // Seprators
-  To,
-  ExpressionSeperator,
-  InternalSeperator,
-  EOF,
-
-  // Non-capturing
-  Space,
-  OptionalSeperator,
-}
-
-// Matches on longest string first, then earlier in array
-const lexer = buildLexer([
-  // Number based
-  [true, /^\d{2}/g, TokenKind.Num],
-  [true, /^\d{2}:\d{2}/g, TokenKind.Time],
-  [true, /^24\/7/g, TokenKind.AllWeek],
-
-  // Letter based
-  [true, /^off/g, TokenKind.DayOff], // has to be above Month to take priority
-  [true, /^[a-zA-Z]{3}/g, TokenKind.Month],
-  [true, /^[a-zA-Z]{2}/g, TokenKind.Day],
-
-  // Symbol based
-  [true, /^-/g, TokenKind.To],
-  [true, /^;/g, TokenKind.ExpressionSeperator],
-  [true, /^,/g, TokenKind.InternalSeperator],
-  [true, /^$/g, TokenKind.EOF],
-
-  // Non-capturing
-  [false, /^\s+/g, TokenKind.Space],
-  [false, /^:/g, TokenKind.OptionalSeperator],
-])
 
 const makeDayArray = (
   dayTokens:
@@ -397,12 +350,4 @@ SCHED.setPattern(
   ),
 )
 
-export const parse = (pattern: string): Schedule => {
-  if (pattern.trim() === "") {
-    return []
-  }
-
-  return removeDaysOff(
-    expectSingleResult(expectEOF(SCHED.parse(lexer.parse(pattern)))),
-  )
-}
+export const parser = SCHED
