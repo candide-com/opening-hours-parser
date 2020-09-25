@@ -493,4 +493,51 @@ describe("Days of the year", () => {
       ])
     })
   })
+
+  context("Date range with a specific date closed", () => {
+    it("Aug Mo 08:00-18:00; Aug 10 off", () => {
+      expect(parse("Aug Mo 08:00-18:00; Aug 10 off")).to.eql([
+        {
+          type: "open",
+          dayOfWeek: 1,
+          startTime: "08:00",
+          endTime: "18:00",
+          startDay: "08-01",
+          endDay: "08-31",
+        },
+        {
+          type: "closed",
+          startDay: "08-10",
+          endDay: "08-10",
+        },
+      ])
+    })
+  })
+
+  context("Two completely oevrlapping closed date periods", () => {
+    it("Mo 08:00-18:00; Aug 10 - Aug 30 off; Aug 15 - Aug 20: off", () => {
+      expect(
+        parse("Mo 08:00-18:00; Aug 10 - Aug 30 off; Aug 15 - Aug 20: off"),
+      ).to.eql([
+        {type: "open", dayOfWeek: 1, startTime: "08:00", endTime: "18:00"},
+        {type: "closed", startDay: "08-10", endDay: "08-30"},
+        {type: "closed", startDay: "08-15", endDay: "08-20"},
+      ])
+    })
+  })
+
+  context("Open all year, but with a single month off", () => {
+    it("08:00-18:00; Aug off", () => {
+      expect(parse("08:00-18:00; Aug off")).to.eql([
+        {type: "open", dayOfWeek: 1, startTime: "08:00", endTime: "18:00"},
+        {type: "open", dayOfWeek: 2, startTime: "08:00", endTime: "18:00"},
+        {type: "open", dayOfWeek: 3, startTime: "08:00", endTime: "18:00"},
+        {type: "open", dayOfWeek: 4, startTime: "08:00", endTime: "18:00"},
+        {type: "open", dayOfWeek: 5, startTime: "08:00", endTime: "18:00"},
+        {type: "open", dayOfWeek: 6, startTime: "08:00", endTime: "18:00"},
+        {type: "open", dayOfWeek: 7, startTime: "08:00", endTime: "18:00"},
+        {type: "closed", startDay: "08-01", endDay: "08-31"},
+      ])
+    })
+  })
 })

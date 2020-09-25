@@ -6,6 +6,8 @@ import {
   isOpenSpan,
   Options,
   OpeningHours,
+  ClosedDateSpan,
+  isClosedDateSpan,
 } from "./types"
 import {getISODay, format} from "date-fns"
 import {expectSingleResult, expectEOF} from "typescript-parsec"
@@ -27,6 +29,17 @@ export const openingHours = (schedule: Schedule, options?: Options) => {
     isOpenOn(date) {
       const hoursAndMinutes = format(date, "HH:mm")
       const monthAndDay = format(date, "MM-dd")
+
+      const closedDateSpans = schedule.filter(
+        (span): span is ClosedDateSpan =>
+          isClosedDateSpan(span) &&
+          span.startDay >= monthAndDay &&
+          span.endDay <= monthAndDay,
+      )
+
+      if (closedDateSpans.length > 0) {
+        return false
+      }
 
       const spans = schedule.filter(
         (span): span is OpenSpan =>

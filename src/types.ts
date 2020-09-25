@@ -32,6 +32,12 @@ export interface OpenSpan {
   endDay?: string
 }
 
+export interface ClosedDateSpan {
+  type: "closed"
+  startDay: string
+  endDay: string
+}
+
 export type PublicHoliday = {
   type: "publicHoliday"
 } & (
@@ -45,14 +51,19 @@ export type PublicHoliday = {
     }
 )
 
-export type Schedule = Array<OpenSpan | PublicHoliday>
+export type Schedule = Array<OpenSpan | ClosedDateSpan | PublicHoliday>
 
 export const isPublicHoliday = (
-  span: OpenSpan | PublicHoliday,
+  span: OpenSpan | ClosedDateSpan | PublicHoliday,
 ): span is PublicHoliday => (span as PublicHoliday).type === "publicHoliday"
 
-export const isOpenSpan = (span: OpenSpan | PublicHoliday): span is OpenSpan =>
-  (span as OpenSpan).type === "open"
+export const isOpenSpan = (
+  span: OpenSpan | ClosedDateSpan | PublicHoliday,
+): span is OpenSpan => (span as OpenSpan).type === "open"
+
+export const isClosedDateSpan = (
+  span: OpenSpan | ClosedDateSpan | PublicHoliday,
+): span is ClosedDateSpan => (span as ClosedDateSpan).type === "closed"
 
 export interface Options {
   publicHolidays?: Array<string>

@@ -5,6 +5,7 @@ import {
   Day,
   Month,
   isOpenSpan,
+  ClosedDateSpan,
 } from "./types"
 import {
   Token,
@@ -21,6 +22,25 @@ import {
 import {TokenKind} from "./lexer"
 
 const PUBLIC_HOLIDAY_DAY = 8
+
+interface DayOff {
+  type: "off"
+  dayOfWeek: Day
+}
+
+interface DayRange {
+  startDay: string
+  endDay: string
+}
+
+interface TimeSpan {
+  startTime: string
+  endTime: string
+}
+
+type ParsedSpan = OpenSpan | ClosedDateSpan | PublicHoliday | DayOff
+
+type ParsedSchedule = Array<ParsedSpan>
 
 const dayHash: Record<string, Day> = {
   SU: Day.Sunday,
@@ -75,30 +95,16 @@ function getEndDayOfMonth(text: string): number {
   return endDayOfMonthHash[text.toUpperCase()] ?? 31
 }
 
-interface DayOff {
-  type: "off"
-  dayOfWeek: Day
+function isDayOff(span: ParsedSpan): span is DayOff {
+  return (span as DayOff).type === "off"
 }
 
-interface DayRange {
-  startDay: string
-  endDay: string
+export function removeDaysOff(arr: ParsedSchedule): Schedule {
+  return arr.filter(
+    (span): span is OpenSpan | ClosedDateSpan | PublicHoliday =>
+      !isDayOff(span),
+  )
 }
-
-interface TimeSpan {
-  startTime: string
-  endTime: string
-}
-
-const isDayOff = (span: OpenSpan | PublicHoliday | DayOff): span is DayOff =>
-  (span as DayOff).type === "off"
-
-export const removeDaysOff = (
-  arr: Array<OpenSpan | PublicHoliday | DayOff>,
-): Schedule =>
-  arr.filter((span): span is OpenSpan | PublicHoliday => !isDayOff(span))
-
-type ParsedSchedule = Array<OpenSpan | PublicHoliday | DayOff>
 
 const makeDayArray = (
   dayTokens:
@@ -220,14 +226,24 @@ const buildSchedule = (
   times: Array<TimeSpan> | "day off",
 ): ParsedSchedule => {
   if (times === "day off") {
-    return days.map((dayOfWeek) =>
-      dayOfWeek === PUBLIC_HOLIDAY_DAY
-        ? {type: "publicHoliday" as const, isOpen: false as const}
-        : {
-            type: "off" as const,
-            dayOfWeek,
-          },
-    )
+    if (months === null) {
+      return days.map((dayOfWeek) =>
+        dayOfWeek === PUBLIC_HOLIDAY_DAY
+          ? {type: "publicHoliday" as const, isOpen: false as const}
+          : {
+              type: "off" as const,
+              dayOfWeek,
+            },
+      )
+    }
+
+    return [
+      {
+        type: "closed",
+        startDay: months.startDay,
+        endDay: months.endDay,
+      },
+    ]
   }
 
   return days.flatMap((dayOfWeek) =>
@@ -248,10 +264,7 @@ const buildSchedule = (
   )
 }
 
-const coverSameDates = (
-  span1: OpenSpan | PublicHoliday | DayOff,
-  span2: OpenSpan | PublicHoliday | DayOff,
-): boolean => {
+const coverSameDates = (span1: ParsedSpan, span2: ParsedSpan): boolean => {
   if (isDayOff(span1) || isDayOff(span2)) {
     return true
   }
@@ -275,7 +288,7 @@ const coverSameDates = (
 const combineSchedules = (
   prevSchedule: ParsedSchedule,
   nextSchedule: ParsedSchedule,
-) => {
+): ParsedSchedule => {
   return [
     prevSchedule.filter(
       (oldSpan) =>
@@ -284,7 +297,7 @@ const combineSchedules = (
             "dayOfWeek" in newSpan &&
             "dayOfWeek" in oldSpan &&
             newSpan.dayOfWeek === oldSpan.dayOfWeek &&
-            coverSameDates(newSpan, oldSpan),
+            coverSameDates(oldSpan, newSpan),
         ),
     ),
     nextSchedule,
