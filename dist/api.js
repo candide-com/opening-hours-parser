@@ -17,6 +17,12 @@ exports.openingHours = (schedule, options) => {
         isOpenOn(date) {
             const hoursAndMinutes = date_fns_1.format(date, "HH:mm");
             const monthAndDay = date_fns_1.format(date, "MM-dd");
+            const closedDateSpans = schedule.filter((span) => types_1.isClosedDateSpan(span) &&
+                span.startDay >= monthAndDay &&
+                span.endDay <= monthAndDay);
+            if (closedDateSpans.length > 0) {
+                return false;
+            }
             const spans = schedule.filter((span) => types_1.isOpenSpan(span) && span.dayOfWeek === date_fns_1.getISODay(date));
             const holidayRule = schedule.find((span) => types_1.isPublicHoliday(span));
             if (options !== undefined &&

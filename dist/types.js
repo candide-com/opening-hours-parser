@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.isOpenSpan = exports.isPublicHoliday = exports.Month = exports.Day = void 0;
+exports.isClosedDateSpan = exports.isOpenSpan = exports.isPublicHoliday = exports.Month = exports.Day = void 0;
 var Day;
 (function (Day) {
     Day[Day["Monday"] = 1] = "Monday";
@@ -28,3 +28,4 @@ var Month;
 })(Month = exports.Month || (exports.Month = {}));
 exports.isPublicHoliday = (span) => span.type === "publicHoliday";
 exports.isOpenSpan = (span) => span.type === "open";
+exports.isClosedDateSpan = (span) => span.type === "closed";

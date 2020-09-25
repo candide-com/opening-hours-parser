@@ -106,15 +106,38 @@ export function removeDaysOff(arr: ParsedSchedule): Schedule {
   )
 }
 
+function makeDayToDaySpan(
+  days: [Token<TokenKind.Day>, Token<TokenKind.To>, Token<TokenKind.Day>],
+) {
+  const startDay = getDay(days[0].text)
+  let endDay = getDay(days[2].text)
+
+  if (endDay < startDay) {
+    endDay = endDay + 7
+  }
+
+  return [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14].reduce(
+    (memo: Array<Day>, item: number) => {
+      if (item < startDay) {
+        return memo
+      }
+
+      if (item > endDay) {
+        return memo
+      }
+
+      return [...memo, item > 7 ? item - 7 : item]
+    },
+    [],
+  )
+}
+
 const makeDayArray = (
   dayTokens:
-    | [Token<TokenKind.Day>, Token<TokenKind.To>, Token<TokenKind.Day>]
-    | [
-        Token<TokenKind.Day>,
-        Token<TokenKind.InternalSeperator>,
-        Token<TokenKind.Day>,
-      ]
-    | Token<TokenKind.Day>
+    | Array<
+        | [Token<TokenKind.Day>, Token<TokenKind.To>, Token<TokenKind.Day>]
+        | Token<TokenKind.Day>
+      >
     | Token<TokenKind.AllWeek>
     | undefined,
 ): Array<Day> => {
@@ -122,82 +145,64 @@ const makeDayArray = (
     return [1, 2, 3, 4, 5, 6, 7]
   }
 
-  if ("length" in dayTokens) {
-    if (dayTokens[1].kind === TokenKind.InternalSeperator) {
-      return [getDay(dayTokens[0].text), getDay(dayTokens[2].text)]
-    }
+  if (Array.isArray(dayTokens)) {
+    return dayTokens.flatMap((days) => {
+      if (Array.isArray(days)) {
+        return makeDayToDaySpan(days)
+      }
 
-    const startDay = getDay(dayTokens[0].text)
-    let endDay = getDay(dayTokens[2].text)
-
-    if (endDay < startDay) {
-      endDay = endDay + 7
-    }
-
-    return [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14].reduce(
-      (memo: Array<Day>, item: number) => {
-        if (item < startDay) {
-          return memo
-        }
-
-        if (item > endDay) {
-          return memo
-        }
-
-        return [...memo, item > 7 ? item - 7 : item]
-      },
-      [],
-    )
+      return getDay(days.text)
+    })
   }
 
-  if (dayTokens.kind === TokenKind.AllWeek) {
-    return [1, 2, 3, 4, 5, 6, 7]
-  }
-
-  return [getDay(dayTokens.text)]
+  return [1, 2, 3, 4, 5, 6, 7]
 }
 
 const makeMonthDefinition = (
-  monthTokens:
-    | [
-        Token<TokenKind.Month>,
-        Token<TokenKind.Num>,
-        Token<TokenKind.To>,
-        Token<TokenKind.Month>,
-        Token<TokenKind.Num>,
-      ]
-    | [Token<TokenKind.Month>, Token<TokenKind.Num>]
-    | Token<TokenKind.Month>
+  tokens:
+    | Array<
+        | [
+            Token<TokenKind.Month>,
+            Token<TokenKind.Num>,
+            Token<TokenKind.To>,
+            Token<TokenKind.Month>,
+            Token<TokenKind.Num>,
+          ]
+        | [Token<TokenKind.Month>, Token<TokenKind.Num>]
+        | Token<TokenKind.Month>
+      >
     | undefined,
-): DayRange | null => {
-  if (monthTokens === undefined) {
+): Array<DayRange> | null => {
+  if (tokens === undefined) {
     return null
   }
 
-  if ("kind" in monthTokens) {
-    const startDay = `${getMonth(monthTokens.text)
-      .toString()
-      .padStart(2, "0")}-01`
+  return tokens.flatMap((monthTokens) => {
+    if ("kind" in monthTokens) {
+      const startDay = `${getMonth(monthTokens.text)
+        .toString()
+        .padStart(2, "0")}-01`
 
-    const endDay = `${getMonth(monthTokens.text)
+      const endDay = `${getMonth(monthTokens.text)
+        .toString()
+        .padStart(2, "0")}-${getEndDayOfMonth(monthTokens.text)}`
+
+      return {startDay, endDay}
+    }
+
+    const startDay = `${getMonth(monthTokens[0].text)
       .toString()
-      .padStart(2, "0")}-${getEndDayOfMonth(monthTokens.text)}`
+      .padStart(2, "0")}-${monthTokens[1].text}`
+
+    const endDay =
+      monthTokens.length === 2
+        ? startDay
+        : `${getMonth(monthTokens[3].text).toString().padStart(2, "0")}-${
+            monthTokens[4].text
+          }`
 
     return {startDay, endDay}
-  }
-
-  const startDay = `${getMonth(monthTokens[0].text)
-    .toString()
-    .padStart(2, "0")}-${monthTokens[1].text}`
-
-  const endDay =
-    monthTokens.length === 2
-      ? startDay
-      : `${getMonth(monthTokens[3].text).toString().padStart(2, "0")}-${
-          monthTokens[4].text
-        }`
-
-  return {startDay, endDay}
+  })
 }
 
 const makeTimesArray = (
@@ -221,7 +226,7 @@ const makeTimesArray = (
 }
 
 const buildSchedule = (
-  months: DayRange | null,
+  months: Array<DayRange> | null,
   days: Array<Day>,
   times: Array<TimeSpan> | "day off",
 ): ParsedSchedule => {
@@ -237,29 +242,47 @@ const buildSchedule = (
       )
     }
 
-    return [
-      {
-        type: "closed",
-        startDay: months.startDay,
-        endDay: months.endDay,
-      },
-    ]
+    return months.map((month) => ({
+      type: "closed",
+      startDay: month.startDay,
+      endDay: month.endDay,
+    }))
   }
 
-  return days.flatMap((dayOfWeek) =>
-    times.map((time) =>
-      dayOfWeek === PUBLIC_HOLIDAY_DAY
-        ? {
-            type: "publicHoliday" as const,
-            isOpen: true,
-            ...(time ?? {}),
-          }
-        : {
-            type: "open" as const,
-            dayOfWeek,
-            ...(time ?? {}),
-            ...(months ?? {}),
-          },
+  if (months == null) {
+    return days.flatMap((dayOfWeek) =>
+      times.map((time) =>
+        dayOfWeek === PUBLIC_HOLIDAY_DAY
+          ? {
+              type: "publicHoliday" as const,
+              isOpen: true,
+              ...(time ?? {}),
+            }
+          : {
+              type: "open" as const,
+              dayOfWeek,
+              ...(time ?? {}),
+            },
+      ),
+    )
+  }
+
+  return months.flatMap((month) =>
+    days.flatMap((dayOfWeek) =>
+      times.map((time) =>
+        dayOfWeek === PUBLIC_HOLIDAY_DAY
+          ? {
+              type: "publicHoliday" as const,
+              isOpen: true,
+              ...(time ?? {}),
+            }
+          : {
+              type: "open" as const,
+              dayOfWeek,
+              ...(time ?? {}),
+              ...(month ?? {}),
+            },
+      ),
     ),
   )
 }
@@ -312,28 +335,33 @@ EXPR.setPattern(
     seq(
       apply(
         alt(
-          seq(
-            tok(TokenKind.Month),
-            tok(TokenKind.Num),
-            tok(TokenKind.To),
-            tok(TokenKind.Month),
-            tok(TokenKind.Num),
+          listSc(
+            alt(
+              seq(
+                tok(TokenKind.Month),
+                tok(TokenKind.Num),
+                tok(TokenKind.To),
+                tok(TokenKind.Month),
+                tok(TokenKind.Num),
+              ),
+              seq(tok(TokenKind.Month), tok(TokenKind.Num)),
+              tok(TokenKind.Month),
+            ),
+            tok(TokenKind.InternalSeperator),
           ),
-          seq(tok(TokenKind.Month), tok(TokenKind.Num)),
-          tok(TokenKind.Month),
           nil(),
         ),
         makeMonthDefinition,
       ),
       apply(
         alt(
-          seq(tok(TokenKind.Day), tok(TokenKind.To), tok(TokenKind.Day)),
-          seq(
-            tok(TokenKind.Day),
+          listSc(
+            alt(
+              seq(tok(TokenKind.Day), tok(TokenKind.To), tok(TokenKind.Day)),
+              tok(TokenKind.Day),
+            ),
             tok(TokenKind.InternalSeperator),
-            tok(TokenKind.Day),
           ),
-          tok(TokenKind.Day),
           tok(TokenKind.AllWeek),
           nil(),
         ),

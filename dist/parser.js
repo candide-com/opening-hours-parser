@@ -55,8 +55,13 @@ function getEndDayOfMonth(text) {
     var _a;
     return (_a = endDayOfMonthHash[text.toUpperCase()]) !== null && _a !== void 0 ? _a : 31;
 }
-const isDayOff = (span) => span.type === "off";
-exports.removeDaysOff = (arr) => arr.filter((span) => !isDayOff(span));
+function isDayOff(span) {
+    return span.type === "off";
+}
+function removeDaysOff(arr) {
+    return arr.filter((span) => !isDayOff(span));
+}
+exports.removeDaysOff = removeDaysOff;
 const makeDayArray = (dayTokens) => {
     if (dayTokens === undefined) {
         return [1, 2, 3, 4, 5, 6, 7];
@@ -120,12 +125,21 @@ const makeTimesArray = (timeTokens) => {
 };
 const buildSchedule = (months, days, times) => {
     if (times === "day off") {
-        return days.map((dayOfWeek) => dayOfWeek === PUBLIC_HOLIDAY_DAY
-            ? { type: "publicHoliday", isOpen: false }
-            : {
-                type: "off",
-                dayOfWeek,
-            });
+        if (months === null) {
+            return days.map((dayOfWeek) => dayOfWeek === PUBLIC_HOLIDAY_DAY
+                ? { type: "publicHoliday", isOpen: false }
+                : {
+                    type: "off",
+                    dayOfWeek,
+                });
+        }
+        return [
+            {
+                type: "closed",
+                startDay: months.startDay,
+                endDay: months.endDay,
+            },
+        ];
     }
     return days.flatMap((dayOfWeek) => times.map((time) => dayOfWeek === PUBLIC_HOLIDAY_DAY
         ? Object.assign({ type: "publicHoliday", isOpen: true }, (time !== null && time !== void 0 ? time : {})) : Object.assign(Object.assign({ type: "open", dayOfWeek }, (time !== null && time !== void 0 ? time : {})), (months !== null && months !== void 0 ? months : {}))));
@@ -150,7 +164,7 @@ const combineSchedules = (prevSchedule, nextSchedule) => {
         prevSchedule.filter((oldSpan) => !nextSchedule.some((newSpan) => "dayOfWeek" in newSpan &&
             "dayOfWeek" in oldSpan &&
             newSpan.dayOfWeek === oldSpan.dayOfWeek &&
-            coverSameDates(newSpan, oldSpan))),
+            coverSameDates(oldSpan, newSpan))),
         nextSchedule,
     ].flat();
 };

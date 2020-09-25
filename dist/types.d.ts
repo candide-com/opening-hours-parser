@@ -29,6 +29,11 @@ export interface OpenSpan {
     startDay?: string;
     endDay?: string;
 }
+export interface ClosedDateSpan {
+    type: "closed";
+    startDay: string;
+    endDay: string;
+}
 export declare type PublicHoliday = {
     type: "publicHoliday";
 } & ({
@@ -38,9 +43,10 @@ export declare type PublicHoliday = {
 } | {
     isOpen: false;
 });
-export declare type Schedule = Array<OpenSpan | PublicHoliday>;
-export declare const isPublicHoliday: (span: OpenSpan | PublicHoliday) => span is PublicHoliday;
-export declare const isOpenSpan: (span: OpenSpan | PublicHoliday) => span is OpenSpan;
+export declare type Schedule = Array<OpenSpan | ClosedDateSpan | PublicHoliday>;
+export declare const isPublicHoliday: (span: OpenSpan | ClosedDateSpan | PublicHoliday) => span is PublicHoliday;
+export declare const isOpenSpan: (span: OpenSpan | ClosedDateSpan | PublicHoliday) => span is OpenSpan;
+export declare const isClosedDateSpan: (span: OpenSpan | ClosedDateSpan | PublicHoliday) => span is ClosedDateSpan;
 export interface Options {
     publicHolidays?: Array<string>;
 }
