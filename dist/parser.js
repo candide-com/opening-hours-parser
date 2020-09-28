@@ -62,54 +62,58 @@ function removeDaysOff(arr) {
     return arr.filter((span) => !isDayOff(span));
 }
 exports.removeDaysOff = removeDaysOff;
+function makeDayToDaySpan(days) {
+    const startDay = getDay(days[0].text);
+    let endDay = getDay(days[2].text);
+    if (endDay < startDay) {
+        endDay = endDay + 7;
+    }
+    return [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14].reduce((memo, item) => {
+        if (item < startDay) {
+            return memo;
+        }
+        if (item > endDay) {
+            return memo;
+        }
+        return [...memo, item > 7 ? item - 7 : item];
+    }, []);
+}
 const makeDayArray = (dayTokens) => {
     if (dayTokens === undefined) {
         return [1, 2, 3, 4, 5, 6, 7];
     }
-    if ("length" in dayTokens) {
-        if (dayTokens[1].kind === lexer_1.TokenKind.InternalSeperator) {
-            return [getDay(dayTokens[0].text), getDay(dayTokens[2].text)];
-        }
-        const startDay = getDay(dayTokens[0].text);
-        let endDay = getDay(dayTokens[2].text);
-        if (endDay < startDay) {
-            endDay = endDay + 7;
-        }
-        return [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14].reduce((memo, item) => {
-            if (item < startDay) {
-                return memo;
+    if (Array.isArray(dayTokens)) {
+        return dayTokens.flatMap((days) => {
+            if (Array.isArray(days)) {
+                return makeDayToDaySpan(days);
             }
-            if (item > endDay) {
-                return memo;
-            }
-            return [...memo, item > 7 ? item - 7 : item];
-        }, []);
+            return getDay(days.text);
+        });
     }
-    if (dayTokens.kind === lexer_1.TokenKind.AllWeek) {
-        return [1, 2, 3, 4, 5, 6, 7];
-    }
-    return [getDay(dayTokens.text)];
+    return [1, 2, 3, 4, 5, 6, 7];
 };
-const makeMonthDefinition = (monthTokens) => {
-    if (monthTokens === undefined) {
+const makeMonthDefinition = (tokens) => {
+    if (tokens === undefined) {
         return null;
     }
-    if ("kind" in monthTokens) {
-        const startDay = `${getMonth(monthTokens.text)
+    return tokens.flatMap((monthTokens) => {
+        if ("kind" in monthTokens) {
+            const startDay = `${getMonth(monthTokens.text)
+                .toString()
+                .padStart(2, "0")}-01`;
+            const endDay = `${getMonth(monthTokens.text)
+                .toString()
+                .padStart(2, "0")}-${getEndDayOfMonth(monthTokens.text)}`;
+            return { startDay, endDay };
+        }
+        const startDay = `${getMonth(monthTokens[0].text)
             .toString()
-            .padStart(2, "0")}-01`;
-        const endDay = `${getMonth(monthTokens.text)
-            .toString()
-            .padStart(2, "0")}-${getEndDayOfMonth(monthTokens.text)}`;
+            .padStart(2, "0")}-${monthTokens[1].text}`;
+        const endDay = monthTokens.length === 2
+            ? startDay
+            : `${getMonth(monthTokens[3].text).toString().padStart(2, "0")}-${monthTokens[4].text}`;
         return { startDay, endDay };
-    }
-    const startDay = `${getMonth(monthTokens[0].text)
-        .toString()
-        .padStart(2, "0")}-${monthTokens[1].text}`;
-    const endDay = monthTokens.length === 2
-        ? startDay
-        : `${getMonth(monthTokens[3].text).toString().padStart(2, "0")}-${monthTokens[4].text}`;
-    return { startDay, endDay };
+    });
 };
 const makeTimesArray = (timeTokens) => {
     if (timeTokens === undefined) {
@@ -133,16 +137,18 @@ const buildSchedule = (months, days, times) => {
                     dayOfWeek,
                 });
         }
-        return [
-            {
-                type: "closed",
-                startDay: months.startDay,
-                endDay: months.endDay,
-            },
-        ];
+        return months.map((month) => ({
+            type: "closed",
+            startDay: month.startDay,
+            endDay: month.endDay,
+        }));
     }
-    return days.flatMap((dayOfWeek) => times.map((time) => dayOfWeek === PUBLIC_HOLIDAY_DAY
-        ? Object.assign({ type: "publicHoliday", isOpen: true }, (time !== null && time !== void 0 ? time : {})) : Object.assign(Object.assign({ type: "open", dayOfWeek }, (time !== null && time !== void 0 ? time : {})), (months !== null && months !== void 0 ? months : {}))));
+    if (months == null) {
+        return days.flatMap((dayOfWeek) => times.map((time) => dayOfWeek === PUBLIC_HOLIDAY_DAY
+            ? Object.assign({ type: "publicHoliday", isOpen: true }, (time !== null && time !== void 0 ? time : {})) : Object.assign({ type: "open", dayOfWeek }, (time !== null && time !== void 0 ? time : {}))));
+    }
+    return months.flatMap((month) => days.flatMap((dayOfWeek) => times.map((time) => dayOfWeek === PUBLIC_HOLIDAY_DAY
+        ? Object.assign({ type: "publicHoliday", isOpen: true }, (time !== null && time !== void 0 ? time : {})) : Object.assign(Object.assign({ type: "open", dayOfWeek }, (time !== null && time !== void 0 ? time : {})), (month !== null && month !== void 0 ? month : {})))));
 };
 const coverSameDates = (span1, span2) => {
     if (isDayOff(span1) || isDayOff(span2)) {
@@ -170,6 +176,6 @@ const combineSchedules = (prevSchedule, nextSchedule) => {
 };
 const EXPR = typescript_parsec_1.rule();
 const SCHED = typescript_parsec_1.rule();
-EXPR.setPattern(typescript_parsec_1.apply(typescript_parsec_1.seq(typescript_parsec_1.apply(typescript_parsec_1.alt(typescript_parsec_1.seq(typescript_parsec_1.tok(lexer_1.TokenKind.Month), typescript_parsec_1.tok(lexer_1.TokenKind.Num), typescript_parsec_1.tok(lexer_1.TokenKind.To), typescript_parsec_1.tok(lexer_1.TokenKind.Month), typescript_parsec_1.tok(lexer_1.TokenKind.Num)), typescript_parsec_1.seq(typescript_parsec_1.tok(lexer_1.TokenKind.Month), typescript_parsec_1.tok(lexer_1.TokenKind.Num)), typescript_parsec_1.tok(lexer_1.TokenKind.Month), typescript_parsec_1.nil()), makeMonthDefinition), typescript_parsec_1.apply(typescript_parsec_1.alt(typescript_parsec_1.seq(typescript_parsec_1.tok(lexer_1.TokenKind.Day), typescript_parsec_1.tok(lexer_1.TokenKind.To), typescript_parsec_1.tok(lexer_1.TokenKind.Day)), typescript_parsec_1.seq(typescript_parsec_1.tok(lexer_1.TokenKind.Day), typescript_parsec_1.tok(lexer_1.TokenKind.InternalSeperator), typescript_parsec_1.tok(lexer_1.TokenKind.Day)), typescript_parsec_1.tok(lexer_1.TokenKind.Day), typescript_parsec_1.tok(lexer_1.TokenKind.AllWeek), typescript_parsec_1.nil()), makeDayArray), typescript_parsec_1.apply(typescript_parsec_1.alt(typescript_parsec_1.list_sc(typescript_parsec_1.seq(typescript_parsec_1.tok(lexer_1.TokenKind.Time), typescript_parsec_1.tok(lexer_1.TokenKind.To), typescript_parsec_1.tok(lexer_1.TokenKind.Time)), typescript_parsec_1.tok(lexer_1.TokenKind.InternalSeperator)), typescript_parsec_1.tok(lexer_1.TokenKind.DayOff), typescript_parsec_1.nil()), makeTimesArray)), ([months, days, times]) => buildSchedule(months, days, times)));
+EXPR.setPattern(typescript_parsec_1.apply(typescript_parsec_1.seq(typescript_parsec_1.apply(typescript_parsec_1.alt(typescript_parsec_1.list_sc(typescript_parsec_1.alt(typescript_parsec_1.seq(typescript_parsec_1.tok(lexer_1.TokenKind.Month), typescript_parsec_1.tok(lexer_1.TokenKind.Num), typescript_parsec_1.tok(lexer_1.TokenKind.To), typescript_parsec_1.tok(lexer_1.TokenKind.Month), typescript_parsec_1.tok(lexer_1.TokenKind.Num)), typescript_parsec_1.seq(typescript_parsec_1.tok(lexer_1.TokenKind.Month), typescript_parsec_1.tok(lexer_1.TokenKind.Num)), typescript_parsec_1.tok(lexer_1.TokenKind.Month)), typescript_parsec_1.tok(lexer_1.TokenKind.InternalSeperator)), typescript_parsec_1.nil()), makeMonthDefinition), typescript_parsec_1.apply(typescript_parsec_1.alt(typescript_parsec_1.list_sc(typescript_parsec_1.alt(typescript_parsec_1.seq(typescript_parsec_1.tok(lexer_1.TokenKind.Day), typescript_parsec_1.tok(lexer_1.TokenKind.To), typescript_parsec_1.tok(lexer_1.TokenKind.Day)), typescript_parsec_1.tok(lexer_1.TokenKind.Day)), typescript_parsec_1.tok(lexer_1.TokenKind.InternalSeperator)), typescript_parsec_1.tok(lexer_1.TokenKind.AllWeek), typescript_parsec_1.nil()), makeDayArray), typescript_parsec_1.apply(typescript_parsec_1.alt(typescript_parsec_1.list_sc(typescript_parsec_1.seq(typescript_parsec_1.tok(lexer_1.TokenKind.Time), typescript_parsec_1.tok(lexer_1.TokenKind.To), typescript_parsec_1.tok(lexer_1.TokenKind.Time)), typescript_parsec_1.tok(lexer_1.TokenKind.InternalSeperator)), typescript_parsec_1.tok(lexer_1.TokenKind.DayOff), typescript_parsec_1.nil()), makeTimesArray)), ([months, days, times]) => buildSchedule(months, days, times)));
 SCHED.setPattern(typescript_parsec_1.lrec_sc(EXPR, typescript_parsec_1.kright(typescript_parsec_1.tok(lexer_1.TokenKind.ExpressionSeperator), EXPR), combineSchedules));
 exports.parser = SCHED;
