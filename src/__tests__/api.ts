@@ -204,7 +204,7 @@ describe("isOpenOn", () => {
   })
 })
 
-describe.only("nextOpenOn", () => {
+describe("nextOpenOn", () => {
   context("currently open", () => {
     it("returns current date", () => {
       const {nextOpenOn} = openingHours([
