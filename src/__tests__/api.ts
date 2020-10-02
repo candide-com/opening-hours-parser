@@ -238,7 +238,7 @@ describe("nextOpenOn", () => {
     })
   })
 
-  context("closed until next Monday (dayOfWeek wraps around)", () => {
+  context("closed until next week", () => {
     it("returns next Monday", () => {
       const {nextOpenOn} = openingHours([
         {type: "open", dayOfWeek: 1, startTime: "10:00", endTime: "14:00"},
@@ -280,8 +280,8 @@ describe("nextOpenOn", () => {
     })
   })
 
-  context("outside season, season starts next year", () => {
-    it("returns start of season", () => {
+  context("out of season, season starts next year", () => {
+    it("returns start of next season", () => {
       const {nextOpenOn} = openingHours([
         {
           type: "open",
@@ -379,24 +379,7 @@ describe("nextOpenOn", () => {
     })
   })
 
-  context("usually open but not this week", () => {
-    it("returns the day after the closed period ends", () => {
-      const {nextOpenOn} = openingHours([
-        {type: "open", dayOfWeek: 1, startTime: "10:00", endTime: "14:00"},
-        {type: "open", dayOfWeek: 2, startTime: "10:00", endTime: "14:00"},
-        {type: "open", dayOfWeek: 3, startTime: "10:00", endTime: "14:00"},
-        {type: "open", dayOfWeek: 4, startTime: "10:00", endTime: "14:00"},
-        {type: "open", dayOfWeek: 5, startTime: "10:00", endTime: "14:00"},
-        {type: "open", dayOfWeek: 6, startTime: "10:00", endTime: "14:00"},
-        {type: "open", dayOfWeek: 7, startTime: "10:00", endTime: "14:00"},
-        {type: "closed", startDay: "01-27", endDay: "02-02"},
-      ])
-      expect(
-        nextOpenOn(new Date("2020-02-01T12:00:00.000"))?.toISOString(),
-      ).to.eq(new Date("2020-02-03T10:00:00.000").toISOString())
-    })
-  })
-  context("usually open but not this week", () => {
+  context("usually open all week but closed this week", () => {
     it("returns the day after the closed period ends", () => {
       const {nextOpenOn} = openingHours([
         {type: "open", dayOfWeek: 1, startTime: "10:00", endTime: "14:00"},
@@ -414,31 +397,28 @@ describe("nextOpenOn", () => {
     })
   })
 
-  context(
-    "usually not open until Wednesday, but there's a public holiday on Monday",
-    () => {
-      it("returns Monday", () => {
-        const {nextOpenOn} = openingHours(
-          [
-            {type: "open", dayOfWeek: 3, startTime: "10:00", endTime: "14:00"},
-            {
-              type: "publicHoliday",
-              isOpen: true,
-              startTime: "08:00",
-              endTime: "16:00",
-            },
-          ],
-          {publicHolidays: ["2020-01-06"]},
-        )
+  context("Opens on Wednesdays and public holidays", () => {
+    it("returns Monday", () => {
+      const {nextOpenOn} = openingHours(
+        [
+          {type: "open", dayOfWeek: 3, startTime: "10:00", endTime: "14:00"},
+          {
+            type: "publicHoliday",
+            isOpen: true,
+            startTime: "08:00",
+            endTime: "16:00",
+          },
+        ],
+        {publicHolidays: ["2020-01-06"]},
+      )
 
-        expect(
-          nextOpenOn(new Date("2020-01-03T11:00:00.000"))?.toISOString(),
-        ).to.eq(new Date("2020-01-06T08:00:00.000").toISOString())
-      })
-    },
-  )
+      expect(
+        nextOpenOn(new Date("2020-01-03T11:00:00.000"))?.toISOString(),
+      ).to.eq(new Date("2020-01-06T08:00:00.000").toISOString())
+    })
+  })
 
-  context("usually open on Monday, but next Monday is a public holday", () => {
+  context("usually open on Monday, but closes on bank holidays", () => {
     it("returns Tuesday", () => {
       const {nextOpenOn} = openingHours(
         [
