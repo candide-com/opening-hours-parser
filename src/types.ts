@@ -32,6 +32,8 @@ export interface OpenSpan {
   endDay?: string
 }
 
+export type OpenSeasonSpan = OpenSpan & {startDay: string; endDay: string}
+
 export interface ClosedDateSpan {
   type: "closed"
   startDay: string
@@ -71,4 +73,5 @@ export interface Options {
 
 export interface OpeningHours {
   isOpenOn(date: Date): boolean
+  nextOpenOn(date: Date): Date | null
 }
