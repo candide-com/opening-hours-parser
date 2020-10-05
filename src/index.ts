@@ -1,2 +1,3 @@
-export {openingHours, parse} from "./api"
+export {openingHours} from "./api"
+export {parse} from "./utils"
 export * from "./types"
