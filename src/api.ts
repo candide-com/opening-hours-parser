@@ -138,16 +138,15 @@ export const openingHours = (schedule: Schedule, options?: Options) => {
           ...potentialDates,
           ...removeUndefined(
             seasonSpans.map((seasonSpan) => {
+              const startDay = parseDate(
+                `${seasonSpan.startDay} ${seasonSpan.startTime}`,
+                "MM-dd HH:mm",
+                new Date(),
+              )
+
               const firstDayOfWeekInSpan = addWeeks(
-                setDay(
-                  parseDate(
-                    `${seasonSpan.startDay} ${seasonSpan.startTime}`,
-                    "MM-dd HH:mm",
-                    new Date(),
-                  ),
-                  seasonSpan.dayOfWeek,
-                ),
-                seasonSpan.dayOfWeek < dayOfWeek ? 1 : 0,
+                setDay(startDay, seasonSpan.dayOfWeek),
+                seasonSpan.dayOfWeek < getISODay(startDay) ? 1 : 0,
               )
 
               if (format(firstDayOfWeekInSpan, "MM-dd") > seasonSpan.endDay) {

@@ -280,6 +280,75 @@ describe("nextOpenOn", () => {
     })
   })
 
+  context(
+    "out of season, season starts this year and season is one specific date",
+    () => {
+      it("returns start of next season", () => {
+        const {nextOpenOn} = openingHours([
+          {
+            type: "open",
+            dayOfWeek: 1,
+            startTime: "10:00",
+            endTime: "14:00",
+            startDay: "08-01",
+            endDay: "08-01",
+          },
+          {
+            type: "open",
+            dayOfWeek: 2,
+            startTime: "10:00",
+            endTime: "14:00",
+            startDay: "08-01",
+            endDay: "08-01",
+          },
+          {
+            type: "open",
+            dayOfWeek: 3,
+            startTime: "10:00",
+            endTime: "14:00",
+            startDay: "08-01",
+            endDay: "08-01",
+          },
+          {
+            type: "open",
+            dayOfWeek: 4,
+            startTime: "10:00",
+            endTime: "14:00",
+            startDay: "08-01",
+            endDay: "08-01",
+          },
+          {
+            type: "open",
+            dayOfWeek: 5,
+            startTime: "10:00",
+            endTime: "14:00",
+            startDay: "08-01",
+            endDay: "08-01",
+          },
+          {
+            type: "open",
+            dayOfWeek: 6,
+            startTime: "10:00",
+            endTime: "14:00",
+            startDay: "08-01",
+            endDay: "08-01",
+          },
+          {
+            type: "open",
+            dayOfWeek: 7,
+            startTime: "10:00",
+            endTime: "14:00",
+            startDay: "08-01",
+            endDay: "08-01",
+          },
+        ])
+        expect(
+          nextOpenOn(new Date("2020-02-05T16:00:00.000"))?.toISOString(),
+        ).to.eq(new Date("2020-08-01T10:00:00.000").toISOString())
+      })
+    },
+  )
+
   context("out of season, season starts next year", () => {
     it("returns start of next season", () => {
       const {nextOpenOn} = openingHours([
