@@ -145,7 +145,11 @@ export const openingHours = (schedule: Schedule, options?: Options) => {
               )
 
               const firstDayOfWeekInSpan = addWeeks(
-                setDay(startDay, seasonSpan.dayOfWeek),
+                setDay(
+                  startDay,
+                  seasonSpan.dayOfWeek === 7 ? 0 : seasonSpan.dayOfWeek,
+                  {weekStartsOn: 1},
+                ),
                 seasonSpan.dayOfWeek < getISODay(startDay) ? 1 : 0,
               )
 
