@@ -1,23 +1,22 @@
 import {
   Schedule,
-  PublicHoliday,
-  isPublicHoliday,
-  OpenSpan,
-  isOpenSpan,
   Options,
+  OpeningHours,
   ClosedDateSpan,
   isClosedDateSpan,
-  OpeningHours,
+  OpenSpan,
+  isOpenSpan,
+  PublicHoliday,
+  isPublicHoliday,
 } from "../types"
-import {getISODay, format} from "date-fns"
-import {noDaysSpecified, withinDays, withinTimes} from "../utils"
+import {format, getISODay} from "date-fns"
+import {noDaysSpecified, withinDays} from "../utils"
 
-export default function isOpenOnFactory(
+export default function isOpenOnDateFactory(
   schedule: Schedule,
   options?: Options,
-): OpeningHours["isOpenOn"] {
-  return function isOpenOn(date) {
-    const hoursAndMinutes = format(date, "HH:mm")
+): OpeningHours["isOpenOnDate"] {
+  return function isOpenOnDate(date) {
     const monthAndDay = format(date, "MM-dd")
 
     const closedDateSpans = schedule.filter(
@@ -48,17 +47,7 @@ export default function isOpenOnFactory(
         (holiday) => holiday === format(date, "yyyy-MM-dd"),
       )
     ) {
-      if (holidayRule !== undefined && holidayRule.isOpen === false) {
-        return false
-      }
-
-      if (
-        hoursAndMinutes >= holidayRule.startTime &&
-        hoursAndMinutes <= holidayRule.endTime
-      ) {
-        return true
-      }
-      return false
+      return holidayRule.isOpen
     }
 
     if (spans.length === 0) {
@@ -67,9 +56,7 @@ export default function isOpenOnFactory(
 
     if (
       spans.some(
-        (span) =>
-          (withinTimes(span, hoursAndMinutes) && noDaysSpecified(span)) ||
-          (withinTimes(span, hoursAndMinutes) && withinDays(span, monthAndDay)),
+        (span) => noDaysSpecified(span) || withinDays(span, monthAndDay),
       )
     ) {
       return true

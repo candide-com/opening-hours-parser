@@ -13,13 +13,13 @@ import {
   withinDays,
   withinTimes,
 } from "../utils"
-import {Options, Schedule} from "../types"
+import {Options, Schedule, OpeningHours} from "../types"
 
 export default function nextOpenOnFactory(
   schedule: Schedule,
   options?: Options,
-) {
-  return function nextOpenOn(date: Date) {
+): OpeningHours["nextOpenOn"] {
+  return function nextOpenOn(date) {
     // Open times are not guaranteed correct if spans contradict each other
     const hoursAndMinutes = format(date, "HH:mm")
     const monthAndDay = format(date, "MM-dd")

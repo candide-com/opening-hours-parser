@@ -151,7 +151,7 @@ describe("isOpenOn", () => {
   })
 
   context("on a public holiday, when it's open on a public holiday", () => {
-    it("returns false", () => {
+    it("returns true", () => {
       const {isOpenOn} = openingHours(
         [
           {type: "open", dayOfWeek: 1, startTime: "10:00", endTime: "14:00"},
@@ -507,6 +507,95 @@ describe("nextOpenOn", () => {
       expect(
         nextOpenOn(new Date("2020-01-03T17:00:00.000"))?.toISOString(),
       ).to.eq(new Date("2020-01-07T10:00:00.000").toISOString())
+    })
+  })
+})
+
+describe("isOpenOnDate", () => {
+  context("A date on an open day", () => {
+    it("return true", () => {
+      const {isOpenOnDate} = openingHours([
+        {type: "open", dayOfWeek: 7, startTime: "10:00", endTime: "18:00"},
+      ])
+
+      expect(isOpenOnDate(new Date("2020-12-06"))).to.eq(true)
+    })
+  })
+
+  context("A date on a non-open day due to the day of the week", () => {
+    it("return false", () => {
+      const {isOpenOnDate} = openingHours([
+        {type: "open", dayOfWeek: 7, startTime: "10:00", endTime: "18:00"},
+      ])
+
+      expect(isOpenOnDate(new Date("2020-12-05"))).to.eq(false)
+    })
+  })
+
+  context("A date on a non-open day due to the season being over", () => {
+    it("return false", () => {
+      const {isOpenOnDate} = openingHours([
+        {
+          type: "open",
+          dayOfWeek: 1,
+          startTime: "10:00",
+          endTime: "18:00",
+          startDay: "10-01",
+          endDay: "12-06",
+        },
+      ])
+
+      expect(isOpenOnDate(new Date("2020-12-07"))).to.eq(false)
+    })
+  })
+
+  context("A date on an explicitly closed day", () => {
+    it("return false", () => {
+      const {isOpenOnDate} = openingHours([
+        {
+          type: "closed",
+          startDay: "10-01",
+          endDay: "10-03",
+        },
+      ])
+
+      expect(isOpenOnDate(new Date("2020-10-02"))).to.eq(false)
+    })
+  })
+
+  context("A date on a public holiday, when public holidays are open", () => {
+    it("returns true", () => {
+      const {isOpenOnDate} = openingHours(
+        [
+          {type: "open", dayOfWeek: 1, startTime: "10:00", endTime: "18:00"},
+          {
+            type: "publicHoliday",
+            isOpen: true,
+            startTime: "10:00",
+            endTime: "18:00",
+          },
+        ],
+        {publicHolidays: ["2020-12-04"]},
+      )
+
+      expect(isOpenOnDate(new Date("2020-12-04"))).to.eq(true)
+    })
+  })
+
+  context("A date on a public holiday, when public holidays are closed", () => {
+    it("returns false", () => {
+      const {isOpenOnDate} = openingHours(
+        [
+          {type: "open", dayOfWeek: 1, startTime: "10:00", endTime: "18:00"},
+          {
+            type: "publicHoliday",
+            isOpen: false,
+          },
+        ],
+        {publicHolidays: ["2020-12-04"]},
+      )
+
+      expect(isOpenOnDate(new Date("2020-12-04"))).to.eq(false)
     })
   })
 })

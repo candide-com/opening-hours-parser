@@ -73,5 +73,6 @@ export interface Options {
 
 export interface OpeningHours {
   isOpenOn(date: Date): boolean
+  isOpenOnDate(date: Date): boolean
   nextOpenOn(date: Date): Date | null
 }

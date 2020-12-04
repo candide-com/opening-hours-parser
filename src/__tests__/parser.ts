@@ -197,6 +197,22 @@ describe("parse two expressions", () => {
       ])
     })
 
+    it("Mo-Fr; PH", () => {
+      expect(parse("Mo-Fr; PH")).to.eql([
+        {type: "open", dayOfWeek: 1, startTime: "00:00", endTime: "24:00"},
+        {type: "open", dayOfWeek: 2, startTime: "00:00", endTime: "24:00"},
+        {type: "open", dayOfWeek: 3, startTime: "00:00", endTime: "24:00"},
+        {type: "open", dayOfWeek: 4, startTime: "00:00", endTime: "24:00"},
+        {type: "open", dayOfWeek: 5, startTime: "00:00", endTime: "24:00"},
+        {
+          type: "publicHoliday",
+          isOpen: true,
+          startTime: "00:00",
+          endTime: "24:00",
+        },
+      ])
+    })
+
     it("Mo-Fr; PH 08:00-12:00", () => {
       expect(parse("Mo-Fr; PH 08:00-12:00")).to.eql([
         {type: "open", dayOfWeek: 1, startTime: "00:00", endTime: "24:00"},
