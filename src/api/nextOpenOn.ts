@@ -70,7 +70,7 @@ export default function nextOpenOnFactory(
             const startDay = parseDate(
               `${seasonSpan.startDay} ${seasonSpan.startTime}`,
               "MM-dd HH:mm",
-              new Date(),
+              date,
             )
 
             const firstDayOfWeekInSpan = addWeeks(
@@ -140,7 +140,7 @@ export default function nextOpenOnFactory(
             parseDate(
               `${holiday} ${publicHoliday.startTime}`,
               "yyyy-MM-dd HH:mm",
-              new Date(),
+              date,
             ),
           ),
         ]
