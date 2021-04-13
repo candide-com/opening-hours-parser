@@ -26,14 +26,14 @@ describe("parse a single expression", () => {
     it("Mo-Fr 08:00-12:00,13:00-17:00", () => {
       expect(parse("Mo-Fr 08:00-12:00,13:00-17:00")).to.eql([
         {type: "open", dayOfWeek: 1, startTime: "08:00", endTime: "12:00"},
-        {type: "open", dayOfWeek: 1, startTime: "13:00", endTime: "17:00"},
         {type: "open", dayOfWeek: 2, startTime: "08:00", endTime: "12:00"},
-        {type: "open", dayOfWeek: 2, startTime: "13:00", endTime: "17:00"},
         {type: "open", dayOfWeek: 3, startTime: "08:00", endTime: "12:00"},
-        {type: "open", dayOfWeek: 3, startTime: "13:00", endTime: "17:00"},
         {type: "open", dayOfWeek: 4, startTime: "08:00", endTime: "12:00"},
-        {type: "open", dayOfWeek: 4, startTime: "13:00", endTime: "17:00"},
         {type: "open", dayOfWeek: 5, startTime: "08:00", endTime: "12:00"},
+        {type: "open", dayOfWeek: 1, startTime: "13:00", endTime: "17:00"},
+        {type: "open", dayOfWeek: 2, startTime: "13:00", endTime: "17:00"},
+        {type: "open", dayOfWeek: 3, startTime: "13:00", endTime: "17:00"},
+        {type: "open", dayOfWeek: 4, startTime: "13:00", endTime: "17:00"},
         {type: "open", dayOfWeek: 5, startTime: "13:00", endTime: "17:00"},
       ])
     })
@@ -617,6 +617,75 @@ describe("Days of the year", () => {
         {type: "open", dayOfWeek: 7, startTime: "08:00", endTime: "18:00"},
         {type: "closed", startDay: "08-01", endDay: "08-01"},
         {type: "closed", startDay: "09-10", endDay: "09-10"},
+      ])
+    })
+  })
+
+  context("Days with different times", () => {
+    it("Mo-We, PH 11:00-18:00, Fr-Sa 12:00-17:00, Su 08:00-12:00, 13:00-18:00", () => {
+      expect(
+        parse(
+          "Mo-We, PH 11:00-18:00, Fr-Sa 12:00-17:00, Su 08:00-12:00, 13:00-18:00",
+        ),
+      ).to.eql([
+        {type: "open", dayOfWeek: 1, startTime: "11:00", endTime: "18:00"},
+        {type: "open", dayOfWeek: 2, startTime: "11:00", endTime: "18:00"},
+        {type: "open", dayOfWeek: 3, startTime: "11:00", endTime: "18:00"},
+        {
+          type: "publicHoliday",
+          isOpen: true,
+          startTime: "11:00",
+          endTime: "18:00",
+        },
+        {type: "open", dayOfWeek: 5, startTime: "12:00", endTime: "17:00"},
+        {type: "open", dayOfWeek: 6, startTime: "12:00", endTime: "17:00"},
+        {type: "open", dayOfWeek: 7, startTime: "08:00", endTime: "12:00"},
+        {type: "open", dayOfWeek: 7, startTime: "13:00", endTime: "18:00"},
+      ])
+    })
+
+    it("Apr 02 - Oct 31 Th-Sa, PH 11:00-18:00, Su 12:00-17:00", () => {
+      expect(
+        parse("Apr 02 - Oct 31 Th-Sa, PH 11:00-18:00, Su 12:00-17:00"),
+      ).to.eql([
+        {
+          type: "open",
+          dayOfWeek: 4,
+          startTime: "11:00",
+          endTime: "18:00",
+          startDay: "04-02",
+          endDay: "10-31",
+        },
+        {
+          type: "open",
+          dayOfWeek: 5,
+          startTime: "11:00",
+          endTime: "18:00",
+          startDay: "04-02",
+          endDay: "10-31",
+        },
+        {
+          type: "open",
+          dayOfWeek: 6,
+          startTime: "11:00",
+          endTime: "18:00",
+          startDay: "04-02",
+          endDay: "10-31",
+        },
+        {
+          type: "publicHoliday",
+          isOpen: true,
+          startTime: "11:00",
+          endTime: "18:00",
+        },
+        {
+          type: "open",
+          dayOfWeek: 7,
+          startTime: "12:00",
+          endTime: "17:00",
+          startDay: "04-02",
+          endDay: "10-31",
+        },
       ])
     })
   })

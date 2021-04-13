@@ -20,6 +20,7 @@ import {
   tok,
 } from "typescript-parsec"
 import {TokenKind} from "./lexer"
+import {fillLeftTuple} from "./utils"
 
 const PUBLIC_HOLIDAY_DAY = 8
 
@@ -83,6 +84,8 @@ const endDayOfMonthHash: Record<string, Month> = {
   DEC: 31,
 }
 
+const fullWeek: Array<Day> = [1, 2, 3, 4, 5, 6, 7]
+
 function getDay(text: string): Day {
   return dayHash[text.toUpperCase()] ?? Day.Monday
 }
@@ -106,11 +109,11 @@ export function removeDaysOff(arr: ParsedSchedule): Schedule {
   )
 }
 
-function makeDayToDaySpan(
-  days: [Token<TokenKind.Day>, Token<TokenKind.To>, Token<TokenKind.Day>],
-) {
-  const startDay = getDay(days[0].text)
-  let endDay = getDay(days[2].text)
+function makeDayRange(
+  tokens: [Token<TokenKind.Day>, Token<TokenKind.To>, Token<TokenKind.Day>],
+): Array<Day> {
+  const startDay = getDay(tokens[0].text)
+  let endDay = getDay(tokens[2].text)
 
   if (endDay < startDay) {
     endDay = endDay + 7
@@ -132,51 +135,19 @@ function makeDayToDaySpan(
   )
 }
 
-const makeDayArray = (
-  dayTokens:
-    | Array<
-        | [Token<TokenKind.Day>, Token<TokenKind.To>, Token<TokenKind.Day>]
-        | Token<TokenKind.Day>
-      >
-    | Token<TokenKind.AllWeek>
-    | undefined,
-): Array<Day> => {
-  if (dayTokens === undefined) {
-    return [1, 2, 3, 4, 5, 6, 7]
-  }
-
-  if (Array.isArray(dayTokens)) {
-    return dayTokens.flatMap((days) => {
-      if (Array.isArray(days)) {
-        return makeDayToDaySpan(days)
-      }
-
-      return getDay(days.text)
-    })
-  }
-
-  return [1, 2, 3, 4, 5, 6, 7]
-}
-
-const makeMonthDefinition = (
-  tokens:
-    | Array<
-        | [
-            Token<TokenKind.Month>,
-            Token<TokenKind.Num>,
-            Token<TokenKind.To>,
-            Token<TokenKind.Month>,
-            Token<TokenKind.Num>,
-          ]
-        | [Token<TokenKind.Month>, Token<TokenKind.Num>]
-        | Token<TokenKind.Month>
-      >
-    | undefined,
-): Array<DayRange> | null => {
-  if (tokens === undefined) {
-    return null
-  }
-
+function makeMonth(
+  tokens: Array<
+    | [
+        Token<TokenKind.Month>,
+        Token<TokenKind.Num>,
+        Token<TokenKind.To>,
+        Token<TokenKind.Month>,
+        Token<TokenKind.Num>,
+      ]
+    | [Token<TokenKind.Month>, Token<TokenKind.Num>]
+    | Token<TokenKind.Month>
+  >,
+): Array<DayRange> {
   return tokens.flatMap((monthTokens) => {
     if ("kind" in monthTokens) {
       const startDay = `${getMonth(monthTokens.text)
@@ -205,36 +176,45 @@ const makeMonthDefinition = (
   })
 }
 
-const makeTimesArray = (
-  timeTokens:
-    | Array<[Token<TokenKind.Time>, Token<TokenKind.To>, Token<TokenKind.Time>]>
+function makeTimeSpan(
+  token:
+    | [Token<TokenKind.Time>, Token<TokenKind.To>, Token<TokenKind.Time>]
     | Token<TokenKind.DayOff>
     | undefined,
-): Array<TimeSpan> | "day off" => {
-  if (timeTokens === undefined) {
-    return [{startTime: "00:00", endTime: "24:00"}]
+): TimeSpan | "day off" {
+  if (token === undefined) {
+    return {startTime: "00:00", endTime: "24:00"}
   }
 
-  if ("kind" in timeTokens) {
+  if ("kind" in token) {
     return "day off" as const
   }
 
-  return timeTokens.map((time) => ({
-    startTime: time[0].text,
-    endTime: time[2].text,
-  }))
+  return {
+    startTime: token[0].text,
+    endTime: token[2].text,
+  }
 }
 
-const buildSchedule = (
-  months: Array<DayRange> | null,
-  days: Array<Day>,
-  times: Array<TimeSpan> | "day off",
-): ParsedSchedule => {
-  if (times === "day off") {
-    if (months === null) {
-      return days.map((dayOfWeek) =>
-        dayOfWeek === PUBLIC_HOLIDAY_DAY
-          ? {type: "publicHoliday" as const, isOpen: false as const}
+function combineDaysAndTimes(
+  month: DayRange | undefined,
+  daysAndTimes: Array<[Array<Day> | undefined, TimeSpan | "day off"]>,
+): ParsedSchedule {
+  return fillLeftTuple(daysAndTimes).flatMap(([days, time]) => {
+    if (time === "day off") {
+      if (days === undefined && month !== undefined) {
+        return {
+          type: "closed" as const,
+          ...month,
+        }
+      }
+
+      return (days ?? fullWeek).map((dayOfWeek) =>
+        (dayOfWeek as number) === PUBLIC_HOLIDAY_DAY
+          ? {
+              type: "publicHoliday" as const,
+              isOpen: false as const,
+            }
           : {
               type: "off" as const,
               dayOfWeek,
@@ -242,52 +222,36 @@ const buildSchedule = (
       )
     }
 
-    return months.map((month) => ({
-      type: "closed",
-      startDay: month.startDay,
-      endDay: month.endDay,
-    }))
-  }
-
-  if (months == null) {
-    return days.flatMap((dayOfWeek) =>
-      times.map((time) =>
-        dayOfWeek === PUBLIC_HOLIDAY_DAY
+    return (days ?? fullWeek).map((dayOfWeek) => {
+      const span =
+        (dayOfWeek as number) === PUBLIC_HOLIDAY_DAY
           ? {
               type: "publicHoliday" as const,
-              isOpen: true,
-              ...(time ?? {}),
+              isOpen: true as const,
+              ...time,
             }
           : {
               type: "open" as const,
               dayOfWeek,
-              ...(time ?? {}),
-            },
-      ),
-    )
-  }
-
-  return months.flatMap((month) =>
-    days.flatMap((dayOfWeek) =>
-      times.map((time) =>
-        dayOfWeek === PUBLIC_HOLIDAY_DAY
-          ? {
-              type: "publicHoliday" as const,
-              isOpen: true,
-              ...(time ?? {}),
+              ...time,
+              ...month,
             }
-          : {
-              type: "open" as const,
-              dayOfWeek,
-              ...(time ?? {}),
-              ...(month ?? {}),
-            },
-      ),
-    ),
-  )
+
+      return span as ParsedSpan
+    })
+  })
 }
 
-const coverSameDates = (span1: ParsedSpan, span2: ParsedSpan): boolean => {
+function buildSchedule(
+  months: Array<DayRange> | undefined,
+  daysAndTimes: Array<[Array<Day> | undefined, TimeSpan | "day off"]>,
+): ParsedSchedule {
+  return months === undefined
+    ? combineDaysAndTimes(undefined, daysAndTimes)
+    : months.flatMap((month) => combineDaysAndTimes(month, daysAndTimes))
+}
+
+function coversSameDates(span1: ParsedSpan, span2: ParsedSpan): boolean {
   if (isDayOff(span1) || isDayOff(span2)) {
     return true
   }
@@ -308,10 +272,10 @@ const coverSameDates = (span1: ParsedSpan, span2: ParsedSpan): boolean => {
   return span1.startDay === span2.startDay && span1.endDay === span2.endDay
 }
 
-const combineSchedules = (
+function combineSchedules(
   prevSchedule: ParsedSchedule,
   nextSchedule: ParsedSchedule,
-): ParsedSchedule => {
+): ParsedSchedule {
   return [
     prevSchedule.filter(
       (oldSpan) =>
@@ -320,75 +284,94 @@ const combineSchedules = (
             "dayOfWeek" in newSpan &&
             "dayOfWeek" in oldSpan &&
             newSpan.dayOfWeek === oldSpan.dayOfWeek &&
-            coverSameDates(oldSpan, newSpan),
+            coversSameDates(oldSpan, newSpan),
         ),
     ),
     nextSchedule,
   ].flat()
 }
 
-const EXPR = rule<TokenKind, ParsedSchedule>()
-const SCHED = rule<TokenKind, ParsedSchedule>()
+const monthPart = rule<TokenKind, Array<DayRange> | undefined>()
+const dayPart = rule<TokenKind, Array<Day> | undefined>()
+const timePart = rule<TokenKind, TimeSpan | "day off">()
 
-EXPR.setPattern(
-  apply(
-    seq(
-      apply(
+const repeatingExpression = rule<TokenKind, ParsedSchedule>()
+const scheduleParser = rule<TokenKind, ParsedSchedule>()
+
+monthPart.setPattern(
+  alt(
+    apply(
+      listSc(
         alt(
-          listSc(
-            alt(
-              seq(
-                tok(TokenKind.Month),
-                tok(TokenKind.Num),
-                tok(TokenKind.To),
-                tok(TokenKind.Month),
-                tok(TokenKind.Num),
-              ),
-              seq(tok(TokenKind.Month), tok(TokenKind.Num)),
-              tok(TokenKind.Month),
-            ),
-            tok(TokenKind.InternalSeperator),
+          seq(
+            tok(TokenKind.Month),
+            tok(TokenKind.Num),
+            tok(TokenKind.To),
+            tok(TokenKind.Month),
+            tok(TokenKind.Num),
           ),
-          nil(),
+          seq(tok(TokenKind.Month), tok(TokenKind.Num)),
+          tok(TokenKind.Month),
         ),
-        makeMonthDefinition,
+        tok(TokenKind.InternalSeperator),
       ),
-      apply(
-        alt(
-          listSc(
-            alt(
-              seq(tok(TokenKind.Day), tok(TokenKind.To), tok(TokenKind.Day)),
-              tok(TokenKind.Day),
-            ),
-            tok(TokenKind.InternalSeperator),
-          ),
-          tok(TokenKind.AllWeek),
-          nil(),
-        ),
-        makeDayArray,
-      ),
-      apply(
-        alt(
-          listSc(
-            seq(tok(TokenKind.Time), tok(TokenKind.To), tok(TokenKind.Time)),
-            tok(TokenKind.InternalSeperator),
-          ),
-          tok(TokenKind.DayOff),
-          nil(),
-        ),
-        makeTimesArray,
-      ),
+      makeMonth,
     ),
-    ([months, days, times]) => buildSchedule(months, days, times),
+    nil(),
   ),
 )
 
-SCHED.setPattern(
+dayPart.setPattern(
+  alt(
+    apply(
+      listSc(
+        alt(
+          apply(
+            seq(tok(TokenKind.Day), tok(TokenKind.To), tok(TokenKind.Day)),
+            makeDayRange,
+          ),
+          apply(tok(TokenKind.Day), (token) => [getDay(token.text)]),
+        ),
+        tok(TokenKind.InternalSeperator),
+      ),
+      (days) => days.flat(),
+    ),
+    nil(),
+  ),
+)
+
+timePart.setPattern(
+  apply(
+    alt(
+      seq(tok(TokenKind.Time), tok(TokenKind.To), tok(TokenKind.Time)),
+      tok(TokenKind.DayOff),
+      nil(),
+    ),
+    makeTimeSpan,
+  ),
+)
+
+repeatingExpression.setPattern(
+  alt(
+    apply(tok(TokenKind.AllWeek), () =>
+      buildSchedule(undefined, [[fullWeek, makeTimeSpan(undefined)]]),
+    ),
+    apply(
+      seq(
+        monthPart,
+        listSc(seq(dayPart, timePart), tok(TokenKind.InternalSeperator)),
+      ),
+      ([months, daysAndTimes]) => buildSchedule(months, daysAndTimes),
+    ),
+  ),
+)
+
+scheduleParser.setPattern(
   lrecSc(
-    EXPR,
-    kright(tok(TokenKind.ExpressionSeperator), EXPR),
+    repeatingExpression,
+    kright(tok(TokenKind.ExpressionSeperator), repeatingExpression),
     combineSchedules,
   ),
 )
 
-export const parser = SCHED
+export const parser = scheduleParser

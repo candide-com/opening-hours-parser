@@ -15,6 +15,21 @@ import {parser, removeDaysOff} from "./parser"
 export const removeUndefined = <T>(array: Array<T | undefined>): Array<T> =>
   array.filter((n): n is T => n !== undefined)
 
+export const fillLeftTuple = <T, X>(arr: Array<[T, X]>): Array<[T, X]> => {
+  return arr.reduce<Array<[T, X]>>((memo, item) => {
+    if (memo.length === 0) {
+      return [item]
+    }
+
+    if (item[0] === undefined) {
+      const prevT = memo[memo.length - 1][0]
+      return [...memo, [prevT, item[1]]]
+    }
+
+    return [...memo, item]
+  }, [])
+}
+
 export const parse = (pattern: string): Schedule => {
   if (pattern.trim() === "") {
     return []
