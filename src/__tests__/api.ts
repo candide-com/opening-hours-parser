@@ -509,6 +509,37 @@ describe("nextOpenOn", () => {
       ).to.eq(new Date("2020-01-07T10:00:00.000").toISOString())
     })
   })
+
+  context(
+    "Public holidays are open, and a public holiday from the past is supplied",
+    () => {
+      it("returns the next open day", () => {
+        const {nextOpenOn} = openingHours(
+          [
+            {
+              type: "open",
+              dayOfWeek: 6,
+              startTime: "11:00",
+              endTime: "18:00",
+              startDay: "05-01",
+              endDay: "10-31",
+            },
+            {
+              type: "publicHoliday",
+              isOpen: true,
+              startTime: "11:00",
+              endTime: "18:00",
+            },
+          ],
+          {publicHolidays: ["2021-04-05", "2021-05-03", "2021-05-31"]},
+        )
+
+        expect(
+          nextOpenOn(new Date("2021-04-14T11:36:00.000"))?.toISOString(),
+        ).to.eq(new Date("2021-05-01T11:00:00.000").toISOString())
+      })
+    },
+  )
 })
 
 describe("isOpenOnDate", () => {

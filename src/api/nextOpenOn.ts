@@ -133,10 +133,15 @@ export default function nextOpenOnFactory(
     // Consider holidays
     if (options?.publicHolidays !== undefined && publicHolidays.length > 0) {
       const publicHoliday = publicHolidays[0]
+      const todayDate = format(date, "yyyy-MM-dd")
+      const futurePublicHolidays = options.publicHolidays.filter(
+        (ph) => ph >= todayDate,
+      )
+
       if (publicHoliday.isOpen) {
         potentialDates = [
           ...potentialDates,
-          ...options.publicHolidays.map((holiday) =>
+          ...futurePublicHolidays.map((holiday) =>
             parseDate(
               `${holiday} ${publicHoliday.startTime}`,
               "yyyy-MM-dd HH:mm",
