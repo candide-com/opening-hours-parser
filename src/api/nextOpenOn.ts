@@ -11,7 +11,7 @@ import {
   groupSpansByType,
   removeUndefined,
   withinDays,
-  withinTimes,
+  isBeforeClosing,
 } from "../utils"
 import {Options, Schedule, OpeningHours} from "../types"
 
@@ -39,10 +39,12 @@ export default function nextOpenOnFactory(
       potentialDates = daySpans.map((daySpan) => {
         if (
           daySpan.dayOfWeek === dayOfWeek &&
-          withinTimes(daySpan, hoursAndMinutes)
+          isBeforeClosing(daySpan, hoursAndMinutes)
         ) {
           // Potential date is today
-          return date
+          return hoursAndMinutes > daySpan.startTime
+            ? date
+            : parseDate(daySpan.startTime, "HH:mm", date)
         }
         if (daySpan.dayOfWeek > dayOfWeek) {
           // Potential date is later this week
@@ -89,10 +91,12 @@ export default function nextOpenOnFactory(
             if (withinDays(seasonSpan, monthAndDay)) {
               if (
                 seasonSpan.dayOfWeek === dayOfWeek &&
-                withinTimes(seasonSpan, hoursAndMinutes)
+                isBeforeClosing(seasonSpan, hoursAndMinutes)
               ) {
                 // Potential date is today
-                return date
+                return hoursAndMinutes > seasonSpan.startTime
+                  ? date
+                  : parseDate(seasonSpan.startTime, "HH:mm", date)
               }
               if (seasonSpan.dayOfWeek > dayOfWeek) {
                 // Potential date is later this week

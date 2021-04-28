@@ -56,6 +56,9 @@ export const withinDays = (
 export const withinTimes = (span: OpenSpan, hoursAndMinutes: string) =>
   hoursAndMinutes >= span.startTime && hoursAndMinutes <= span.endTime
 
+export const isBeforeClosing = (span: OpenSpan, hoursAndMinutes: string) =>
+  hoursAndMinutes <= span.endTime
+
 export const noDaysSpecified = (span: OpenSpan) =>
   span.startDay === undefined && span.endDay === undefined
 

@@ -262,6 +262,18 @@ describe("nextOpenOn", () => {
     })
   })
 
+  context("open later today but currently closed, opening today", () => {
+    it("returns today", () => {
+      const {nextOpenOn} = openingHours([
+        {type: "open", dayOfWeek: 3, startTime: "10:00", endTime: "14:00"},
+        {type: "open", dayOfWeek: 4, startTime: "10:00", endTime: "14:00"},
+      ])
+      expect(
+        nextOpenOn(new Date("2020-02-05T09:55:00.000"))?.toISOString(),
+      ).to.eq(new Date("2020-02-05T10:00:00.000").toISOString())
+    })
+  })
+
   context("out of season, season starts this year", () => {
     it("returns start of next season", () => {
       const {nextOpenOn} = openingHours([
@@ -419,6 +431,24 @@ describe("nextOpenOn", () => {
       expect(
         nextOpenOn(new Date("2020-02-03T12:00:00.000"))?.toISOString(),
       ).to.eq(new Date("2020-02-03T12:00:00.000").toISOString())
+    })
+  })
+
+  context("within season and before opening hours on an open day", () => {
+    it("returns current date", () => {
+      const {nextOpenOn} = openingHours([
+        {
+          type: "open",
+          dayOfWeek: 1,
+          startTime: "10:00",
+          endTime: "14:00",
+          startDay: "02-01",
+          endDay: "02-28",
+        },
+      ])
+      expect(
+        nextOpenOn(new Date("2020-02-03T09:55:00.000"))?.toISOString(),
+      ).to.eq(new Date("2020-02-03T10:00:00.000").toISOString())
     })
   })
 
