@@ -11,6 +11,7 @@ import {
 } from "."
 import {lexer} from "./lexer"
 import {parser, removeDaysOff} from "./parser"
+import {addWeeks, getYear, setYear, parse as parseDate} from "date-fns"
 
 export const removeUndefined = <T>(array: Array<T | undefined>): Array<T> =>
   array.filter((n): n is T => n !== undefined)
@@ -93,3 +94,31 @@ export const groupSpansByType = (schedule: Schedule) =>
     },
     {daySpans: [], seasonSpans: [], closedSpans: [], publicHolidays: []},
   )
+
+export const allDatesOfASpecificDayOfWeekBetween = (
+  startDate: Date,
+  endDate: Date,
+): Array<Date> => {
+  const days = [startDate]
+
+  while (addWeeks(days[days.length - 1], 1) < endDate) {
+    days.push(addWeeks(days[days.length - 1], 1))
+  }
+
+  return days
+}
+
+export const endOfSeason = (span: OpenSeasonSpan, date: Date): Date => {
+  const currentYear = getYear(date)
+  const year = span.startDay > span.endDay ? currentYear + 1 : currentYear
+  const endDate = setYear(new Date(span.endDay), year)
+
+  return parseDate(span.endTime, "HH:mm", endDate)
+}
+
+export const startOfSeason = (span: OpenSeasonSpan, date: Date): Date => {
+  return parseDate(`${span.startDay} ${span.startTime}`, "MM-dd HH:mm", date)
+}
+
+export const startOfDay = (span: OpenSpan, date: Date): Date =>
+  parseDate(span.startTime, "HH:mm", date)

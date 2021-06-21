@@ -1,5 +1,5 @@
 import {expect} from "chai"
-import {openingHours} from "../"
+import {openingHours, Schedule} from "../"
 
 describe("isOpenOn", () => {
   context("a time well within open times on an open day", () => {
@@ -475,6 +475,60 @@ describe("nextOpenOn", () => {
       expect(
         nextOpenOn(new Date("2020-02-03T16:00:00.000"))?.toISOString(),
       ).to.eq(new Date("2020-02-04T10:00:00.000").toISOString())
+    })
+  })
+
+  context("usually open for a season, but closed this week", () => {
+    it("returns start of next week", () => {
+      const schedule = [
+        {
+          type: "open",
+          dayOfWeek: 3,
+          startTime: "10:00",
+          endTime: "17:00",
+          startDay: "04-01",
+          endDay: "09-30",
+        },
+        {
+          type: "open",
+          dayOfWeek: 4,
+          startTime: "10:00",
+          endTime: "17:00",
+          startDay: "04-01",
+          endDay: "09-30",
+        },
+        {
+          type: "open",
+          dayOfWeek: 5,
+          startTime: "10:00",
+          endTime: "17:00",
+          startDay: "04-01",
+          endDay: "09-30",
+        },
+        {
+          type: "open",
+          dayOfWeek: 6,
+          startTime: "10:00",
+          endTime: "17:00",
+          startDay: "04-01",
+          endDay: "09-30",
+        },
+        {
+          type: "open",
+          dayOfWeek: 7,
+          startTime: "10:00",
+          endTime: "17:00",
+          startDay: "04-01",
+          endDay: "09-30",
+        },
+        {type: "closed", startDay: "06-23", endDay: "06-27"},
+      ] as Schedule
+
+      const {nextOpenOn} = openingHours(schedule)
+
+      expect(
+        nextOpenOn(new Date("2021-06-21T12:00:00.000"))?.toISOString(),
+      ).to.eq(new Date("2021-06-30T10:00:00.000").toISOString())
     })
   })
 
