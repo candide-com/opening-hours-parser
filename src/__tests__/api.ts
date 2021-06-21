@@ -545,7 +545,7 @@ describe("nextOpenOn", () => {
         {type: "closed", startDay: "01-27", endDay: "02-02"},
       ])
       expect(
-        nextOpenOn(new Date("2020-02-01T12:00:00.000"))?.toISOString(),
+        nextOpenOn(new Date("2020-01-27T12:00:00.000"))?.toISOString(),
       ).to.eq(new Date("2020-02-03T10:00:00.000").toISOString())
     })
   })

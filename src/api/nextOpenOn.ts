@@ -40,22 +40,35 @@ export default function nextOpenOnFactory(
 
     // Consider weekday spans
     if (daySpans.length > 0) {
-      potentialDates = daySpans.map((daySpan) => {
+      potentialDates = daySpans.flatMap((daySpan) => {
         if (
           daySpan.dayOfWeek === dayOfWeek &&
           isBeforeClosing(daySpan, hoursAndMinutes)
         ) {
           // Potential date is today
+          const datesToEndOfSeason = allDatesOfASpecificDayOfWeekBetween(
+            addWeeks(startOfDay(daySpan, date), 1),
+            addYears(date, 1),
+          )
+
           return hoursAndMinutes > daySpan.startTime
-            ? date
-            : startOfDay(daySpan, date)
+            ? [date, ...datesToEndOfSeason]
+            : [startOfDay(daySpan, date), ...datesToEndOfSeason]
         }
+
         if (daySpan.dayOfWeek > dayOfWeek) {
           // Potential date is later this week
-          return startOfDay(daySpan, setDay(date, daySpan.dayOfWeek))
+          return allDatesOfASpecificDayOfWeekBetween(
+            startOfDay(daySpan, setDay(date, daySpan.dayOfWeek)),
+            addYears(date, 1),
+          )
         }
+
         // Potential date is next week
-        return startOfDay(daySpan, addWeeks(setDay(date, daySpan.dayOfWeek), 1))
+        return allDatesOfASpecificDayOfWeekBetween(
+          startOfDay(daySpan, addWeeks(setDay(date, daySpan.dayOfWeek), 1)),
+          addYears(date, 1),
+        )
       })
     }
 
