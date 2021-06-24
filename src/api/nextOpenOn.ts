@@ -123,7 +123,8 @@ export default function nextOpenOnFactory(
               }
 
               // Potential date is next week
-              const nextDate = addWeeks(date, 1)
+              const nextDate = addWeeks(setDay(date, seasonSpan.dayOfWeek), 1)
+
               const nextMonthAndDay = format(nextDate, "MM-dd")
 
               if (nextMonthAndDay <= seasonSpan.endDay) {

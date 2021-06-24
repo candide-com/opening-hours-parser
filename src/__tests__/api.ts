@@ -250,6 +250,24 @@ describe("nextOpenOn", () => {
     })
   })
 
+  context("closed until next week, with seasonal dates", () => {
+    it("returns next Tuesday", () => {
+      const {nextOpenOn} = openingHours([
+        {
+          type: "open",
+          dayOfWeek: 2,
+          startTime: "11:00",
+          endTime: "16:00",
+          startDay: "04-13",
+          endDay: "09-30",
+        },
+      ])
+      expect(
+        nextOpenOn(new Date("2021-06-23T12:00:00.000"))?.toISOString(),
+      ).to.eq(new Date("2021-06-29T11:00:00.000").toISOString())
+    })
+  })
+
   context("open earlier today but now closed, opening tomorrow", () => {
     it("returns tomorrow", () => {
       const {nextOpenOn} = openingHours([
