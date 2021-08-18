@@ -29,3 +29,9 @@ After that, initialise the openingHours factory with the parsed schedule and any
 
   isOpenOn(new Date("2020-07-23T12:30")) // returns false
 ```
+
+## Timezones
+
+The open street map format explicity uses local dates and times whenever they are defined in the schedule.
+
+This library assumes that all javascript datetimes passed in to our utility functions are in the _same_ timezone as the dates and times in the schedule. No conversion from or to UTC takes place, and if you have a datetime from a different timezone, it must first be converted to the correct one.
