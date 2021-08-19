@@ -69,6 +69,7 @@ export const isClosedDateSpan = (
 
 export interface Options {
   publicHolidays?: Array<string>
+  timezone?: string
 }
 
 export interface OpeningHours {

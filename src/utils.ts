@@ -8,10 +8,12 @@ import {
   OpenSpan,
   PublicHoliday,
   Schedule,
+  Options,
 } from "."
 import {lexer} from "./lexer"
 import {parser, removeDaysOff} from "./parser"
 import {addWeeks, getYear, setYear, parse as parseDate} from "date-fns"
+import {zonedTimeToUtc, utcToZonedTime, format} from "date-fns-tz"
 
 export const removeUndefined = <T>(array: Array<T | undefined>): Array<T> =>
   array.filter((n): n is T => n !== undefined)
@@ -108,17 +110,42 @@ export const allDatesOfASpecificDayOfWeekBetween = (
   return days
 }
 
-export const endOfSeason = (span: OpenSeasonSpan, date: Date): Date => {
+export const optionalZonedToUtc = (options: Options) => (date: Date) =>
+  options.timezone !== undefined ? zonedTimeToUtc(date, options.timezone) : date
+
+export const optionalUtcToZoned = (options: Options) => (date: Date) =>
+  options.timezone !== undefined ? utcToZonedTime(date, options.timezone) : date
+
+export const optionalZonedFormat = (options: Options) => (
+  date: Date,
+  pattern: string,
+) =>
+  options.timezone !== undefined
+    ? format(date, pattern, {timeZone: options.timezone})
+    : format(date, pattern)
+
+export const optionalEndOfSeason = (options: Options) => (
+  span: OpenSeasonSpan,
+  date: Date,
+): Date => {
+  const toUtc = optionalZonedToUtc(options)
+
   const currentYear = getYear(date)
   const year = span.startDay > span.endDay ? currentYear + 1 : currentYear
   const endDate = setYear(new Date(span.endDay), year)
 
-  return parseDate(span.endTime, "HH:mm", endDate)
+  return toUtc(parseDate(span.endTime, "HH:mm", endDate))
 }
 
-export const startOfSeason = (span: OpenSeasonSpan, date: Date): Date => {
-  return parseDate(`${span.startDay} ${span.startTime}`, "MM-dd HH:mm", date)
-}
+export const optionalStartOfSeason = (options: Options) => (
+  span: OpenSeasonSpan,
+  date: Date,
+): Date =>
+  optionalZonedToUtc(options)(
+    parseDate(`${span.startDay} ${span.startTime}`, "MM-dd HH:mm", date),
+  )
 
-export const startOfDay = (span: OpenSpan, date: Date): Date =>
-  parseDate(span.startTime, "HH:mm", date)
+export const optionalStartOfDay = (options: Options) => (
+  span: OpenSpan,
+  date: Date,
+): Date => optionalZonedToUtc(options)(parseDate(span.startTime, "HH:mm", date))

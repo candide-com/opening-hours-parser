@@ -1,21 +1,23 @@
 import {
-  getISODay,
-  format,
-  setDay,
   addWeeks,
-  parse as parseDate,
   addYears,
   closestTo,
+  getISODay,
+  parse as parseDate,
+  setDay,
 } from "date-fns"
 import {
+  allDatesOfASpecificDayOfWeekBetween,
   groupSpansByType,
+  isBeforeClosing,
+  optionalEndOfSeason,
+  optionalStartOfDay,
+  optionalStartOfSeason,
+  optionalUtcToZoned,
+  optionalZonedFormat,
+  optionalZonedToUtc,
   removeUndefined,
   withinDays,
-  isBeforeClosing,
-  allDatesOfASpecificDayOfWeekBetween,
-  startOfDay,
-  startOfSeason,
-  endOfSeason,
 } from "../utils"
 import {Options, Schedule, OpeningHours} from "../types"
 
@@ -23,11 +25,18 @@ export default function nextOpenOnFactory(
   schedule: Schedule,
   options?: Options,
 ): OpeningHours["nextOpenOn"] {
+  const endOfSeason = optionalEndOfSeason(options ?? {})
+  const format = optionalZonedFormat(options ?? {})
+  const fromUtc = optionalUtcToZoned(options ?? {})
+  const startOfDay = optionalStartOfDay(options ?? {})
+  const startOfSeason = optionalStartOfSeason(options ?? {})
+  const toUtc = optionalZonedToUtc(options ?? {})
+
   return function nextOpenOn(date) {
     // Open times are not guaranteed correct if spans contradict each other
-    const hoursAndMinutes = format(date, "HH:mm")
-    const monthAndDay = format(date, "MM-dd")
-    const dayOfWeek = getISODay(date)
+    const hoursAndMinutes = format(fromUtc(date), "HH:mm")
+    const monthAndDay = format(fromUtc(date), "MM-dd")
+    const dayOfWeek = getISODay(fromUtc(date))
 
     const {
       daySpans,
@@ -89,7 +98,9 @@ export default function nextOpenOnFactory(
               seasonSpan.dayOfWeek < getISODay(startDay) ? 1 : 0,
             )
 
-            if (format(firstDayOfWeekInSpan, "MM-dd") > seasonSpan.endDay) {
+            if (
+              format(fromUtc(firstDayOfWeekInSpan), "MM-dd") > seasonSpan.endDay
+            ) {
               return [undefined]
             }
 
@@ -112,7 +123,7 @@ export default function nextOpenOnFactory(
               if (seasonSpan.dayOfWeek > dayOfWeek) {
                 // Potential date is later this week
                 const nextDate = setDay(date, seasonSpan.dayOfWeek)
-                const nextMonthAndDay = format(nextDate, "MM-dd")
+                const nextMonthAndDay = format(fromUtc(nextDate), "MM-dd")
 
                 if (nextMonthAndDay <= seasonSpan.endDay) {
                   return allDatesOfASpecificDayOfWeekBetween(
@@ -125,7 +136,7 @@ export default function nextOpenOnFactory(
               // Potential date is next week
               const nextDate = addWeeks(setDay(date, seasonSpan.dayOfWeek), 1)
 
-              const nextMonthAndDay = format(nextDate, "MM-dd")
+              const nextMonthAndDay = format(fromUtc(nextDate), "MM-dd")
 
               if (nextMonthAndDay <= seasonSpan.endDay) {
                 return allDatesOfASpecificDayOfWeekBetween(
@@ -154,7 +165,7 @@ export default function nextOpenOnFactory(
       return (
         closedSpans.length === 0 ||
         !closedSpans.some((closedSpan) =>
-          withinDays(closedSpan, format(potentialDate, "MM-dd")),
+          withinDays(closedSpan, format(fromUtc(potentialDate), "MM-dd")),
         )
       )
     })
@@ -162,7 +173,7 @@ export default function nextOpenOnFactory(
     // Consider holidays
     if (options?.publicHolidays !== undefined && publicHolidays.length > 0) {
       const publicHoliday = publicHolidays[0]
-      const todayDate = format(date, "yyyy-MM-dd")
+      const todayDate = format(fromUtc(date), "yyyy-MM-dd")
       const futurePublicHolidays = options.publicHolidays.filter(
         (ph) => ph >= todayDate,
       )
@@ -171,10 +182,12 @@ export default function nextOpenOnFactory(
         potentialDates = [
           ...potentialDates,
           ...futurePublicHolidays.map((holiday) =>
-            parseDate(
-              `${holiday} ${publicHoliday.startTime}`,
-              "yyyy-MM-dd HH:mm",
-              date,
+            toUtc(
+              parseDate(
+                `${holiday} ${publicHoliday.startTime}`,
+                "yyyy-MM-dd HH:mm",
+                date,
+              ),
             ),
           ),
         ]
@@ -182,7 +195,7 @@ export default function nextOpenOnFactory(
         potentialDates = potentialDates.filter((potentialDate) => {
           return !options.publicHolidays?.some(
             (publicHolidayDate) =>
-              format(potentialDate, "yyy-MM-dd") === publicHolidayDate,
+              format(fromUtc(potentialDate), "yyy-MM-dd") === publicHolidayDate,
           )
         })
       }
