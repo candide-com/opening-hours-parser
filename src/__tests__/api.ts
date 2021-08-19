@@ -225,6 +225,18 @@ describe("nextOpenOn", () => {
     })
   })
 
+  context("Currently open on a date that is open 24 hours a day", () => {
+    it("returns current date", () => {
+      const {nextOpenOn} = zonedOpeningHours([
+        {type: "open", dayOfWeek: 1, startTime: "10:00", endTime: "24:00"},
+      ])
+
+      expect(
+        nextOpenOn(new Date("2020-01-20T23:00:00.000Z"))?.toISOString(),
+      ).to.eq(new Date("2020-01-20T23:00:00.000Z").toISOString())
+    })
+  })
+
   context("closed today, open tomorrow", () => {
     it("returns tomorrows date", () => {
       const {nextOpenOn} = zonedOpeningHours([

@@ -134,7 +134,9 @@ export const optionalEndOfSeason = (options: Options) => (
   const year = span.startDay > span.endDay ? currentYear + 1 : currentYear
   const endDate = setYear(new Date(span.endDay), year)
 
-  return toUtc(parseDate(span.endTime, "HH:mm", endDate))
+  return toUtc(
+    parseDate(span.endTime.replace("24:00", "23:59"), "HH:mm", endDate),
+  )
 }
 
 export const optionalStartOfSeason = (options: Options) => (
