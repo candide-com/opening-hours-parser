@@ -4,7 +4,6 @@ import {
   closestTo,
   getISODay,
   parse as parseDate,
-  setDay,
 } from "date-fns"
 import {
   allDatesOfASpecificDayOfWeekBetween,
@@ -17,6 +16,7 @@ import {
   optionalZonedFormat,
   optionalZonedToUtc,
   removeUndefined,
+  setDay,
   withinDays,
 } from "../utils"
 import {Options, Schedule, OpeningHours} from "../types"
@@ -90,11 +90,7 @@ export default function nextOpenOnFactory(
             const startDay = startOfSeason(seasonSpan, date)
 
             const firstDayOfWeekInSpan = addWeeks(
-              setDay(
-                startDay,
-                seasonSpan.dayOfWeek === 7 ? 0 : seasonSpan.dayOfWeek,
-                {weekStartsOn: 1},
-              ),
+              setDay(startDay, seasonSpan.dayOfWeek),
               seasonSpan.dayOfWeek < getISODay(startDay) ? 1 : 0,
             )
 
@@ -123,6 +119,7 @@ export default function nextOpenOnFactory(
               if (seasonSpan.dayOfWeek > dayOfWeek) {
                 // Potential date is later this week
                 const nextDate = setDay(date, seasonSpan.dayOfWeek)
+
                 const nextMonthAndDay = format(fromUtc(nextDate), "MM-dd")
 
                 if (nextMonthAndDay <= seasonSpan.endDay) {

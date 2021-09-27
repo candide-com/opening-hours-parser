@@ -12,7 +12,14 @@ import {
 } from "."
 import {lexer} from "./lexer"
 import {parser, removeDaysOff} from "./parser"
-import {addWeeks, getYear, setYear, parse as parseDate} from "date-fns"
+import {Day} from "./types"
+import {
+  addWeeks,
+  getYear,
+  setYear,
+  parse as parseDate,
+  setDay as setDayDateFns,
+} from "date-fns"
 import {zonedTimeToUtc, utcToZonedTime, format} from "date-fns-tz"
 
 export const removeUndefined = <T>(array: Array<T | undefined>): Array<T> =>
@@ -151,3 +158,7 @@ export const optionalStartOfDay = (options: Options) => (
   span: OpenSpan,
   date: Date,
 ): Date => optionalZonedToUtc(options)(parseDate(span.startTime, "HH:mm", date))
+
+export function setDay(date: Date, dayOfWeek: Day): Date {
+  return setDayDateFns(date, dayOfWeek === 7 ? 0 : dayOfWeek, {weekStartsOn: 1})
+}

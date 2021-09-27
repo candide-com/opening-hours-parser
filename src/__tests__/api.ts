@@ -657,6 +657,30 @@ describe("nextOpenOn", () => {
       })
     },
   )
+
+  context(
+    "Last Sunday of the season, with a single open day the week after",
+    () => {
+      it("Returns the expected date because there is no startOfWeek problem", () => {
+        const {isOpenOn, nextOpenOn} = zonedOpeningHours([
+          {
+            type: "open",
+            dayOfWeek: 2,
+            startTime: "11:00",
+            endTime: "16:00",
+            startDay: "04-13",
+            endDay: "09-30",
+          },
+        ])
+
+        expect(isOpenOn(new Date("2021-09-28T12:00:00.000Z"))).to.eql(true)
+
+        expect(nextOpenOn(new Date("2021-09-26T11:00:00.000Z"))).to.eql(
+          new Date("2021-09-28T10:00:00.000Z"),
+        )
+      })
+    },
+  )
 })
 
 describe("isOpenOnDate", () => {
