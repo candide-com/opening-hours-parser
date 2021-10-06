@@ -86,39 +86,62 @@ export default function nextOpenOnFactory(
       potentialDates = [
         ...potentialDates,
         ...removeUndefined(
-          seasonSpans.flatMap((seasonSpan) => {
-            const startDay = startOfSeason(seasonSpan, date)
-
-            const firstDayOfWeekInSpan = addWeeks(
-              setDay(startDay, seasonSpan.dayOfWeek),
-              seasonSpan.dayOfWeek < getISODay(startDay) ? 1 : 0,
+          seasonSpans
+            .flatMap((span) =>
+              span.endDay >= span.startDay
+                ? [span]
+                : [
+                    {...span, endDay: "12-31"},
+                    {...span, startDay: "01-01"},
+                  ],
             )
+            .flatMap((seasonSpan) => {
+              const startDay = startOfSeason(seasonSpan, date)
 
-            if (
-              format(fromUtc(firstDayOfWeekInSpan), "MM-dd") > seasonSpan.endDay
-            ) {
-              return [undefined]
-            }
+              const firstDayOfWeekInSpan = addWeeks(
+                setDay(startDay, seasonSpan.dayOfWeek),
+                seasonSpan.dayOfWeek < getISODay(startDay) ? 1 : 0,
+              )
 
-            if (withinDays(seasonSpan, monthAndDay)) {
               if (
-                seasonSpan.dayOfWeek === dayOfWeek &&
-                isBeforeClosing(seasonSpan, hoursAndMinutes)
+                format(fromUtc(firstDayOfWeekInSpan), "MM-dd") >
+                seasonSpan.endDay
               ) {
-                // Potential date is today
-                const datesToEndOfSeason = allDatesOfASpecificDayOfWeekBetween(
-                  addWeeks(startOfDay(seasonSpan, date), 1),
-                  endOfSeason(seasonSpan, date),
-                )
-
-                return hoursAndMinutes > seasonSpan.startTime
-                  ? [date, ...datesToEndOfSeason]
-                  : [startOfDay(seasonSpan, date), ...datesToEndOfSeason]
+                return [undefined]
               }
 
-              if (seasonSpan.dayOfWeek > dayOfWeek) {
-                // Potential date is later this week
-                const nextDate = setDay(date, seasonSpan.dayOfWeek)
+              if (withinDays(seasonSpan, monthAndDay)) {
+                if (
+                  seasonSpan.dayOfWeek === dayOfWeek &&
+                  isBeforeClosing(seasonSpan, hoursAndMinutes)
+                ) {
+                  // Potential date is today
+                  const datesToEndOfSeason = allDatesOfASpecificDayOfWeekBetween(
+                    addWeeks(startOfDay(seasonSpan, date), 1),
+                    endOfSeason(seasonSpan, date),
+                  )
+
+                  return hoursAndMinutes > seasonSpan.startTime
+                    ? [date, ...datesToEndOfSeason]
+                    : [startOfDay(seasonSpan, date), ...datesToEndOfSeason]
+                }
+
+                if (seasonSpan.dayOfWeek > dayOfWeek) {
+                  // Potential date is later this week
+                  const nextDate = setDay(date, seasonSpan.dayOfWeek)
+
+                  const nextMonthAndDay = format(fromUtc(nextDate), "MM-dd")
+
+                  if (nextMonthAndDay <= seasonSpan.endDay) {
+                    return allDatesOfASpecificDayOfWeekBetween(
+                      startOfDay(seasonSpan, nextDate),
+                      endOfSeason(seasonSpan, date),
+                    )
+                  }
+                }
+
+                // Potential date is next week
+                const nextDate = addWeeks(setDay(date, seasonSpan.dayOfWeek), 1)
 
                 const nextMonthAndDay = format(fromUtc(nextDate), "MM-dd")
 
@@ -130,29 +153,16 @@ export default function nextOpenOnFactory(
                 }
               }
 
-              // Potential date is next week
-              const nextDate = addWeeks(setDay(date, seasonSpan.dayOfWeek), 1)
-
-              const nextMonthAndDay = format(fromUtc(nextDate), "MM-dd")
-
-              if (nextMonthAndDay <= seasonSpan.endDay) {
-                return allDatesOfASpecificDayOfWeekBetween(
-                  startOfDay(seasonSpan, nextDate),
-                  endOfSeason(seasonSpan, date),
-                )
+              if (seasonSpan.startDay > monthAndDay) {
+                // Potential date is the first instance of this day of the week in the
+                // season this year
+                return [firstDayOfWeekInSpan]
               }
-            }
 
-            if (seasonSpan.startDay > monthAndDay) {
               // Potential date is the first instance of this day of the week in the
-              // season this year
-              return [firstDayOfWeekInSpan]
-            }
-
-            // Potential date is the first instance of this day of the week in the
-            // season next year
-            return [addYears(firstDayOfWeekInSpan, 1)]
-          }),
+              // season next year
+              return [addYears(firstDayOfWeekInSpan, 1)]
+            }),
         ),
       ]
     }

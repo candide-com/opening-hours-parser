@@ -1,5 +1,5 @@
 import {expect} from "chai"
-import {openingHours, Schedule, Options} from "../"
+import {openingHours, Schedule, Options, parse} from "../"
 
 const zonedOpeningHours = (schedule: Schedule, options?: Options) =>
   openingHours(schedule, {...options, timezone: "Europe/London"})
@@ -681,6 +681,18 @@ describe("nextOpenOn", () => {
       })
     },
   )
+
+  context("A date within a season that wraps around end of the year", () => {
+    it("Returns the next open date within the season", () => {
+      const schedule = parse("Oct 01 - Mar 31 Tu-Sa 10:00-17:00")
+
+      const {nextOpenOn} = zonedOpeningHours(schedule)
+
+      expect(nextOpenOn(new Date("2021-10-04T09:00:00.000Z"))).to.eql(
+        new Date("2021-10-05T09:00:00.000Z"),
+      )
+    })
+  })
 })
 
 describe("isOpenOnDate", () => {
