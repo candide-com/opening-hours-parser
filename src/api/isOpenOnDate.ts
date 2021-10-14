@@ -10,7 +10,7 @@ import {
   isPublicHoliday,
 } from "../types"
 import {format, getISODay} from "date-fns"
-import {noDaysSpecified, withinDays} from "../utils"
+import {withinDays} from "../utils"
 
 export default function isOpenOnDateFactory(
   schedule: Schedule,
@@ -54,11 +54,7 @@ export default function isOpenOnDateFactory(
       return false
     }
 
-    if (
-      spans.some(
-        (span) => noDaysSpecified(span) || withinDays(span, monthAndDay),
-      )
-    ) {
+    if (spans.some((span) => withinDays(span, monthAndDay))) {
       return true
     }
 

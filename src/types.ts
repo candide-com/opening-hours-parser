@@ -40,8 +40,9 @@ export interface ClosedDateSpan {
   type: "closed"
   startDay: string
   endDay: string
-  // startYear?: number
-  // endYear?: number
+  // TODO add these on in parser
+  startYear?: number
+  endYear?: number
 }
 
 export type PublicHoliday = {

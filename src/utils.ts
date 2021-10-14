@@ -50,10 +50,15 @@ export const parse = (pattern: string): Schedule => {
   )
 }
 
+export const withinYears = (span: OpenSpan | ClosedDateSpan, year: number) =>
+  (span.startYear === undefined || year >= span.startYear) &&
+  (span.endYear === undefined || year <= span.endYear)
+
 export const withinDays = (
   span: OpenSpan | ClosedDateSpan,
   monthAndDay: string,
 ) =>
+  noDaysSpecified(span) ||
   (span.startDay !== undefined &&
     span.endDay !== undefined &&
     monthAndDay >= span.startDay &&
@@ -69,7 +74,7 @@ export const withinTimes = (span: OpenSpan, hoursAndMinutes: string) =>
 export const isBeforeClosing = (span: OpenSpan, hoursAndMinutes: string) =>
   hoursAndMinutes <= span.endTime
 
-export const noDaysSpecified = (span: OpenSpan) =>
+const noDaysSpecified = (span: OpenSpan | ClosedDateSpan) =>
   span.startDay === undefined && span.endDay === undefined
 
 export const groupSpansByType = (schedule: Schedule) =>
