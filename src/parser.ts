@@ -39,6 +39,11 @@ interface TimeSpan {
   endTime: string
 }
 
+interface YearRange {
+  startYear: number
+  endYear?: number
+}
+
 type ParsedSpan = OpenSpan | ClosedDateSpan | PublicHoliday | DayOff
 
 type ParsedSchedule = Array<ParsedSpan>
@@ -135,6 +140,27 @@ function makeDayRange(
   )
 }
 
+function makeYear(
+  token:
+    | Token<TokenKind.Year>
+    | [Token<TokenKind.Year>, Token<TokenKind.Plus>]
+    | [Token<TokenKind.Year>, Token<TokenKind.To>, Token<TokenKind.Year>],
+): YearRange {
+  if ("kind" in token) {
+    const year = parseInt(token.text, 10)
+    return {startYear: year, endYear: year}
+  }
+
+  if (token.length === 2) {
+    const startYear = parseInt(token[0].text, 10)
+    return {startYear}
+  }
+
+  const startYear = parseInt(token[0].text, 10)
+  const endYear = parseInt(token[2].text, 10)
+  return {startYear, endYear}
+}
+
 function makeMonth(
   tokens: Array<
     | [
@@ -197,6 +223,7 @@ function makeTimeSpan(
 }
 
 function combineDaysAndTimes(
+  yearRange: YearRange | undefined,
   month: DayRange | undefined,
   daysAndTimes: Array<[Array<Day> | undefined, TimeSpan | "day off"]>,
 ): ParsedSchedule {
@@ -235,6 +262,7 @@ function combineDaysAndTimes(
               dayOfWeek,
               ...time,
               ...month,
+              ...yearRange,
             }
 
       return span as ParsedSpan
@@ -243,12 +271,15 @@ function combineDaysAndTimes(
 }
 
 function buildSchedule(
+  yearRange: YearRange | undefined,
   months: Array<DayRange> | undefined,
   daysAndTimes: Array<[Array<Day> | undefined, TimeSpan | "day off"]>,
 ): ParsedSchedule {
   return months === undefined
-    ? combineDaysAndTimes(undefined, daysAndTimes)
-    : months.flatMap((month) => combineDaysAndTimes(month, daysAndTimes))
+    ? combineDaysAndTimes(yearRange, undefined, daysAndTimes)
+    : months.flatMap((month) =>
+        combineDaysAndTimes(yearRange, month, daysAndTimes),
+      )
 }
 
 function coversSameDates(span1: ParsedSpan, span2: ParsedSpan): boolean {
@@ -258,6 +289,10 @@ function coversSameDates(span1: ParsedSpan, span2: ParsedSpan): boolean {
 
   if (!isOpenSpan(span1) || !isOpenSpan(span2)) {
     return true
+  }
+
+  if (span1.startYear !== span2.startYear && span1.endYear !== span2.endYear) {
+    return false
   }
 
   if (
@@ -291,12 +326,27 @@ function combineSchedules(
   ].flat()
 }
 
+const yearPart = rule<TokenKind, YearRange | undefined>()
 const monthPart = rule<TokenKind, Array<DayRange> | undefined>()
 const dayPart = rule<TokenKind, Array<Day> | undefined>()
 const timePart = rule<TokenKind, TimeSpan | "day off">()
 
 const repeatingExpression = rule<TokenKind, ParsedSchedule>()
 const scheduleParser = rule<TokenKind, ParsedSchedule>()
+
+yearPart.setPattern(
+  alt(
+    apply(
+      alt(
+        tok(TokenKind.Year),
+        seq(tok(TokenKind.Year), tok(TokenKind.Plus)),
+        seq(tok(TokenKind.Year), tok(TokenKind.To), tok(TokenKind.Year)),
+      ),
+      makeYear,
+    ),
+    nil(),
+  ),
+)
 
 monthPart.setPattern(
   alt(
@@ -354,14 +404,18 @@ timePart.setPattern(
 repeatingExpression.setPattern(
   alt(
     apply(tok(TokenKind.AllWeek), () =>
-      buildSchedule(undefined, [[fullWeek, makeTimeSpan(undefined)]]),
+      buildSchedule(undefined, undefined, [
+        [fullWeek, makeTimeSpan(undefined)],
+      ]),
     ),
     apply(
       seq(
+        yearPart,
         monthPart,
         listSc(seq(dayPart, timePart), tok(TokenKind.InternalSeperator)),
       ),
-      ([months, daysAndTimes]) => buildSchedule(months, daysAndTimes),
+      ([yearRange, months, daysAndTimes]) =>
+        buildSchedule(yearRange, months, daysAndTimes),
     ),
   ),
 )

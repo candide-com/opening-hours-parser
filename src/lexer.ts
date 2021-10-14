@@ -2,6 +2,7 @@ import {buildLexer} from "typescript-parsec"
 
 export enum TokenKind {
   // Semantic
+  Year,
   Month,
   Day,
   Num,
@@ -11,7 +12,8 @@ export enum TokenKind {
   DayOff,
   AllWeek,
 
-  // Seprators
+  // Symbols
+  Plus,
   To,
   ExpressionSeperator,
   InternalSeperator,
@@ -25,6 +27,7 @@ export enum TokenKind {
 // Matches on longest string first, then earlier in array
 export const lexer = buildLexer([
   // Number based
+  [true, /^\d{4}/g, TokenKind.Year],
   [true, /^\d{2}/g, TokenKind.Num],
   [true, /^\d{2}:\d{2}/g, TokenKind.Time],
   [true, /^24\/7/g, TokenKind.AllWeek],
@@ -35,6 +38,7 @@ export const lexer = buildLexer([
   [true, /^[a-zA-Z]{2}/g, TokenKind.Day],
 
   // Symbol based
+  [true, /^\+/g, TokenKind.Plus],
   [true, /^-/g, TokenKind.To],
   [true, /^;/g, TokenKind.ExpressionSeperator],
   [true, /^,/g, TokenKind.InternalSeperator],

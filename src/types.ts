@@ -30,6 +30,8 @@ export interface OpenSpan {
   endTime: string
   startDay?: string
   endDay?: string
+  startYear?: number
+  endYear?: number
 }
 
 export type OpenSeasonSpan = OpenSpan & {startDay: string; endDay: string}
@@ -38,6 +40,8 @@ export interface ClosedDateSpan {
   type: "closed"
   startDay: string
   endDay: string
+  // startYear?: number
+  // endYear?: number
 }
 
 export type PublicHoliday = {

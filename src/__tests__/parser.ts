@@ -128,6 +128,46 @@ describe("parse a single expression", () => {
       ])
     })
   })
+
+  context("year range", () => {
+    it("2030", () => {
+      expect(parse("2030 Mo")).to.eql([
+        {
+          type: "open",
+          dayOfWeek: 1,
+          startTime: "00:00",
+          endTime: "24:00",
+          startYear: 2030,
+          endYear: 2030,
+        },
+      ])
+    })
+
+    it("2030+", () => {
+      expect(parse("2030+ Mo")).to.eql([
+        {
+          type: "open",
+          dayOfWeek: 1,
+          startTime: "00:00",
+          endTime: "24:00",
+          startYear: 2030,
+        },
+      ])
+    })
+
+    it("2030-2034", () => {
+      expect(parse("2030-2034 Mo")).to.eql([
+        {
+          type: "open",
+          dayOfWeek: 1,
+          startTime: "00:00",
+          endTime: "24:00",
+          startYear: 2030,
+          endYear: 2034,
+        },
+      ])
+    })
+  })
 })
 
 describe("parse two expressions", () => {
@@ -225,6 +265,99 @@ describe("parse two expressions", () => {
           isOpen: true,
           startTime: "08:00",
           endTime: "12:00",
+        },
+      ])
+    })
+  })
+
+  context("year ranges", () => {
+    it("2020 Mo; 2021 Fr", () => {
+      expect(parse("2020 Mo; 2021 Fr")).to.eql([
+        {
+          type: "open",
+          dayOfWeek: 1,
+          startTime: "00:00",
+          endTime: "24:00",
+          startYear: 2020,
+          endYear: 2020,
+        },
+        {
+          type: "open",
+          dayOfWeek: 5,
+          startTime: "00:00",
+          endTime: "24:00",
+          startYear: 2021,
+          endYear: 2021,
+        },
+      ])
+    })
+
+    it("covering the same year", () => {
+      expect(parse("2020 Oct Mo 12:00-19:00; 2020 Oct Mo 12:00-18:00")).to.eql([
+        {
+          type: "open",
+          dayOfWeek: 1,
+          startTime: "12:00",
+          endTime: "18:00",
+          startDay: "10-01",
+          endDay: "10-31",
+          startYear: 2020,
+          endYear: 2020,
+        },
+      ])
+    })
+
+    it("covering multiple year ranges", () => {
+      expect(
+        parse(
+          "2020 Oct Mo 12:00-18:00; 2021-2022 Mo 13:00-17:00; 2023+ Mo 12:00-18:00",
+        ),
+      ).to.eql([
+        {
+          type: "open",
+          dayOfWeek: 1,
+          startTime: "12:00",
+          endTime: "18:00",
+          startDay: "10-01",
+          endDay: "10-31",
+          startYear: 2020,
+          endYear: 2020,
+        },
+        {
+          type: "open",
+          dayOfWeek: 1,
+          startTime: "13:00",
+          endTime: "17:00",
+          startYear: 2021,
+          endYear: 2022,
+        },
+        {
+          type: "open",
+          dayOfWeek: 1,
+          startTime: "12:00",
+          endTime: "18:00",
+          startYear: 2023,
+        },
+      ])
+    })
+
+    it("covering overlapping year ranges", () => {
+      expect(parse("2021 Mo 12:00-19:00; 2020-2024 Mo 12:00-18:00")).to.eql([
+        {
+          type: "open",
+          dayOfWeek: 1,
+          startTime: "12:00",
+          endTime: "19:00",
+          startYear: 2021,
+          endYear: 2021,
+        },
+        {
+          type: "open",
+          dayOfWeek: 1,
+          startTime: "12:00",
+          endTime: "18:00",
+          startYear: 2020,
+          endYear: 2024,
         },
       ])
     })
