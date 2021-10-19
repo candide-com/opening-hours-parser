@@ -54,6 +54,18 @@ export const withinYears = (span: OpenSpan | ClosedDateSpan, year: number) =>
   (span.startYear === undefined || year >= span.startYear) &&
   (span.endYear === undefined || year <= span.endYear)
 
+export const hasYearsAndWithinYears = (
+  span: OpenSpan | ClosedDateSpan,
+  year: number,
+) =>
+  span.startYear !== undefined &&
+  year >= span.startYear &&
+  span.endYear !== undefined &&
+  year <= span.endYear
+
+const noDaysSpecified = (span: OpenSpan | ClosedDateSpan) =>
+  span.startDay === undefined && span.endDay === undefined
+
 export const withinDays = (
   span: OpenSpan | ClosedDateSpan,
   monthAndDay: string,
@@ -68,14 +80,24 @@ export const withinDays = (
     span.endDay < span.startDay &&
     (monthAndDay >= span.startDay || monthAndDay <= span.endDay))
 
+export const hasDaysAndWithinDays = (
+  span: OpenSpan | ClosedDateSpan,
+  monthAndDay: string,
+) =>
+  (span.startDay !== undefined &&
+    span.endDay !== undefined &&
+    monthAndDay >= span.startDay &&
+    monthAndDay <= span.endDay) ||
+  (span.startDay !== undefined &&
+    span.endDay !== undefined &&
+    span.endDay < span.startDay &&
+    (monthAndDay >= span.startDay || monthAndDay <= span.endDay))
+
 export const withinTimes = (span: OpenSpan, hoursAndMinutes: string) =>
   hoursAndMinutes >= span.startTime && hoursAndMinutes <= span.endTime
 
 export const isBeforeClosing = (span: OpenSpan, hoursAndMinutes: string) =>
   hoursAndMinutes <= span.endTime
-
-const noDaysSpecified = (span: OpenSpan | ClosedDateSpan) =>
-  span.startDay === undefined && span.endDay === undefined
 
 export const groupSpansByType = (schedule: Schedule) =>
   schedule.reduce<{

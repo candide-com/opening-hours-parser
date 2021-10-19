@@ -2,7 +2,7 @@ import {expect} from "chai"
 import {openingHours, Options, parse} from "../"
 
 const zonedOpeningHours = (unparsed: string, options?: Options) =>
-  openingHours(parse(unparsed), {...options, timezone: "Europe/London"})
+  openingHours(parse(unparsed), {...options, timezone: "UTC"})
 
 function test({
   input,
@@ -10,8 +10,8 @@ function test({
   closed = [],
 }: {
   input: string
-  open?: Date[]
-  closed?: Date[]
+  open?: Array<Date>
+  closed?: Array<Date>
 }) {
   it(input, () => {
     const {isOpenOn} = zonedOpeningHours(input)
@@ -83,7 +83,67 @@ describe("isOpenOn", () => {
         new Date("2020-01-01T12:00:00.000Z"),
         new Date("2019-01-01T20:00:00.000Z"),
       ],
-      closed: [new Date("2020-01-01T20:00:00.000Z")],
+      closed: [new Date("2020-01-01T19:00:00.000Z")],
+    })
+  })
+
+  context("one default and one year", () => {
+    test({
+      input: "2020 Mo-Su 12:00-20:00; Mo-Su 12:00-18:00",
+      open: [
+        new Date("2020-01-01T12:00:00.000Z"),
+        new Date("2019-01-01T18:00:00.000Z"),
+      ],
+      closed: [new Date("2020-01-01T19:00:00.000Z")],
+    })
+  })
+
+  context("one month and one year", () => {
+    test({
+      input: "Dec Mo-Su 12:00-20:00; 2020 Mo-Su 12:00-18:00",
+      open: [
+        new Date("2020-01-01T12:00:00.000Z"),
+        new Date("2019-12-01T18:00:00.000Z"),
+      ],
+      closed: [new Date("2019-01-01T19:00:00.000Z")],
+    })
+  })
+
+  context("lunch break", () => {
+    test({
+      input: "Mo-Su 10:00-12:00, 13:00-17:00",
+      open: [new Date("2020-06-01T10:30:00.000Z")],
+      closed: [
+        new Date("2020-06-01T12:30:00.000Z"),
+        new Date("2020-06-01T17:30:00.000Z"),
+      ],
+    })
+  })
+
+  context("override", () => {
+    test({
+      input: "Mo-Su 10:00-12:00; Mo-Su 13:00-17:00",
+      open: [new Date("2020-06-01T13:30:00.000Z")],
+      closed: [new Date("2020-06-01T10:30:00.000Z")],
+    })
+  })
+
+  context("one month and one default", () => {
+    test({
+      input: "Mo-Su 10:00-12:00; Dec Mo-Su 13:00-17:00",
+      open: [new Date("2020-06-01T10:30:00.000Z")],
+      closed: [new Date("2020-12-01T10:30:00.000Z")],
+    })
+  })
+
+  context("monday and tuesday", () => {
+    test({
+      input: "2020 Tu 10:00-12:00; 2020 Mo 13:00-17:00",
+      open: [
+        new Date("2020-12-07T13:30:00.000Z"),
+        new Date("2020-12-08T10:30:00.000Z"),
+      ],
+      closed: [new Date("2020-12-07T10:30:00.000Z")],
     })
   })
 })

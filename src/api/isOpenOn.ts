@@ -18,6 +18,29 @@ import {
   withinYears,
 } from "../utils"
 
+const yearSpecified = (s: OpenSpan) =>
+  s.startYear !== undefined || s.endYear !== undefined
+
+const daysSpecified = (s: OpenSpan | ClosedDateSpan) =>
+  s.startDay !== undefined || s.endDay !== undefined
+
+const isMostSpecific = (span: OpenSpan, spans: Array<OpenSpan>) => {
+  if (spans.length === 0) {
+    return true
+  }
+  if (yearSpecified(span) && !spans.some(yearSpecified)) {
+    return true
+  }
+  if (
+    daysSpecified(span) &&
+    !spans.some(daysSpecified) &&
+    !spans.some(yearSpecified)
+  ) {
+    return true
+  }
+  return false
+}
+
 export default function isOpenOnFactory(
   schedule: Schedule,
   options?: Options,
@@ -75,25 +98,40 @@ export default function isOpenOnFactory(
       return false
     }
 
-    // const spansMatchingYearAndDay = spans.filter(
-    //   (span) => withinYears(span, year) && withinDays(span, monthAndDay),
-    // )
+    const {isOpen} = spans.reverse().reduce<{
+      isOpen?: boolean
+      checkedSpans: Array<OpenSpan>
+    }>(
+      ({isOpen, checkedSpans}, span) => {
+        if (isOpen !== undefined) {
+          return {isOpen, checkedSpans}
+        }
 
-    // const lastSpan = spansMatchingYearAndDay[spansMatchingYearAndDay.length - 1]
+        if (checkedSpans.length > 0 && isMostSpecific(span, checkedSpans)) {
+          return {isOpen, checkedSpans: [...checkedSpans, span]}
+        }
 
-    // return !!lastSpan && withinTimes(lastSpan, hoursAndMinutes)
-
-    if (
-      spans.some(
-        (span) =>
+        if (
           withinYears(span, year) &&
           withinDays(span, monthAndDay) &&
-          withinTimes(span, hoursAndMinutes),
-      )
-    ) {
-      return true
-    }
+          withinTimes(span, hoursAndMinutes)
+        ) {
+          return {isOpen: true, checkedSpans}
+        }
 
-    return false
+        if (
+          yearSpecified(span) &&
+          withinYears(span, year) &&
+          withinDays(span, monthAndDay)
+        ) {
+          return {isOpen: false, checkedSpans}
+        }
+
+        return {isOpen, checkedSpans: [...checkedSpans, span]}
+      },
+      {isOpen: undefined, checkedSpans: []},
+    )
+
+    return isOpen === undefined ? false : isOpen
   }
 }
