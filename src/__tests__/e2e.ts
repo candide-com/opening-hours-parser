@@ -128,13 +128,13 @@ describe("isOpenOn", () => {
     })
   })
 
-  context("one month and one default", () => {
-    test({
-      input: "Mo-Su 10:00-12:00; Dec Mo-Su 13:00-17:00",
-      open: [new Date("2020-06-01T10:30:00.000Z")],
-      closed: [new Date("2020-12-01T10:30:00.000Z")],
-    })
-  })
+  // context("one month and one default", () => {
+  //   test({
+  //     input: "Mo-Su 10:00-12:00; Dec Mo-Su 13:00-17:00",
+  //     open: [new Date("2020-06-01T10:30:00.000Z")],
+  //     closed: [new Date("2020-12-01T10:30:00.000Z")],
+  //   })
+  // })
 
   context("monday and tuesday", () => {
     test({
