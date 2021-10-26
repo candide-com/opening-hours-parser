@@ -128,6 +128,70 @@ describe("isOpenOn", () => {
       expect(isOpenOn(new Date("2020-02-03T12:00:00.000Z"))).to.eq(true)
     })
   })
+
+  context("open only for one year", () => {
+    const {isOpenOn} = zonedOpeningHours("2020 10:00-14:00")
+
+    it("returns true during that year", () => {
+      expect(isOpenOn(new Date("2020-02-01T12:00:00.000Z"))).to.eq(true)
+    })
+
+    it("returns false the year before", () => {
+      expect(isOpenOn(new Date("2019-02-01T12:00:00.000Z"))).to.eq(false)
+    })
+
+    it("returns false the year after", () => {
+      expect(isOpenOn(new Date("2021-02-01T12:00:00.000Z"))).to.eq(false)
+    })
+  })
+
+  context("open for a range of years", () => {
+    const {isOpenOn} = zonedOpeningHours("2019-2021 10:00-14:00")
+
+    it("returns true during those years", () => {
+      expect(isOpenOn(new Date("2019-02-01T12:00:00.000Z"))).to.eq(true)
+      expect(isOpenOn(new Date("2020-02-01T12:00:00.000Z"))).to.eq(true)
+      expect(isOpenOn(new Date("2021-02-01T12:00:00.000Z"))).to.eq(true)
+    })
+
+    it("returns false outside of those years", () => {
+      expect(isOpenOn(new Date("2018-02-01T12:00:00.000Z"))).to.eq(false)
+      expect(isOpenOn(new Date("2022-02-01T12:00:00.000Z"))).to.eq(false)
+    })
+  })
+
+  context("open from one year onwards", () => {
+    const {isOpenOn} = zonedOpeningHours("2019+ 10:00-14:00")
+
+    it("returns true during that year and after", () => {
+      expect(isOpenOn(new Date("2019-02-01T12:00:00.000Z"))).to.eq(true)
+      expect(isOpenOn(new Date("2030-02-01T12:00:00.000Z"))).to.eq(true)
+    })
+
+    it("returns false before that year", () => {
+      expect(isOpenOn(new Date("2018-02-01T12:00:00.000Z"))).to.eq(false)
+    })
+  })
+
+  context("one year and one default", () => {
+    const {isOpenOn} = zonedOpeningHours("12:00-16:00; 2020 10:00-14:00")
+
+    it("returns true during default times outside of that year", () => {
+      expect(isOpenOn(new Date("2019-02-01T15:00:00.000Z"))).to.eq(true)
+    })
+
+    it("returns false during default times inside of that year", () => {
+      expect(isOpenOn(new Date("2020-02-01T15:00:00.000Z"))).to.eq(false)
+    })
+
+    it("returns true during special times inside of that year", () => {
+      expect(isOpenOn(new Date("2020-02-01T11:00:00.000Z"))).to.eq(true)
+    })
+
+    it("returns false during special times outside of that year", () => {
+      expect(isOpenOn(new Date("2019-02-01T11:00:00.000Z"))).to.eq(false)
+    })
+  })
 })
 
 describe("nextOpenOn", () => {
@@ -363,6 +427,18 @@ describe("nextOpenOn", () => {
       )
     })
   })
+
+  context("closed now, open next year", () => {
+    it("returns the first day of next year", () => {
+      const {nextOpenOn} = zonedOpeningHours(
+        "Feb 10:00-14:00; 2021 10:00-14:00",
+      )
+
+      expect(
+        nextOpenOn(new Date("2020-09-01T12:00:00.000Z"))?.toISOString(),
+      ).to.eq(new Date("2021-01-01T10:00:00.000Z").toISOString())
+    })
+  })
 })
 
 describe("isOpenOnDate", () => {
@@ -415,6 +491,30 @@ describe("isOpenOnDate", () => {
       })
 
       expect(isOpenOnDate(new Date("2020-12-25"))).to.eq(false)
+    })
+  })
+
+  context("closed for one year", () => {
+    const {isOpenOnDate} = zonedOpeningHours("10:00-18:00; 2020 off")
+
+    it("returns false during that year", () => {
+      expect(isOpenOnDate(new Date("2020-02-01T20:00:00.000Z"))).to.eq(false)
+    })
+
+    it("returns true outside of that year", () => {
+      expect(isOpenOnDate(new Date("2021-02-01T20:00:00.000Z"))).to.eq(true)
+    })
+  })
+
+  context("open for one year", () => {
+    const {isOpenOnDate} = zonedOpeningHours("2020 10:00-18:00")
+
+    it("returns true during that year", () => {
+      expect(isOpenOnDate(new Date("2020-02-01T20:00:00.000Z"))).to.eq(true)
+    })
+
+    it("returns false outside that year", () => {
+      expect(isOpenOnDate(new Date("2021-02-01T20:00:00.000Z"))).to.eq(false)
     })
   })
 })
