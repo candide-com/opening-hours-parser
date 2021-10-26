@@ -95,7 +95,6 @@ describe("isOpenOn", () => {
 
   context("on a public holiday, when it's closed on a public holiday", () => {
     it("returns false", () => {
-      console.log()
       const {isOpenOn} = zonedOpeningHours("Mo 10:00-14:00; PH off", {
         publicHolidays: ["2020-01-06"],
       })
