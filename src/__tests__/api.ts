@@ -1,8 +1,8 @@
 import {expect} from "chai"
-import {openingHours, Options, parse} from "../"
+import {openingHours, Options} from "../"
 
 const zonedOpeningHours = (oh: string, options?: Options) =>
-  openingHours(parse(oh), {...options, timezone: "Europe/London"})
+  openingHours(oh, {...options, timezone: "Europe/London"})
 
 describe("isOpenOn", () => {
   context("a time well within open times on an open day", () => {
@@ -19,7 +19,7 @@ describe("isOpenOn", () => {
       const {isOpenOn} = zonedOpeningHours("Mo 10:00-14:00")
 
       expect(isOpenOn(new Date("2020-01-06T10:00:00.000Z"))).to.eq(true)
-      expect(isOpenOn(new Date("2020-01-06T14:00:00.000Z"))).to.eq(true)
+      expect(isOpenOn(new Date("2020-01-06T13:59:59.999Z"))).to.eq(true)
     })
   })
 
@@ -58,7 +58,7 @@ describe("isOpenOn", () => {
   context("a time inside a closed date span", () => {
     it("returns false", () => {
       const {isOpenOn} = zonedOpeningHours(
-        "10:00-14:00; Jun 01 - Jun 31 off; Jun 10 - Jun 15 off",
+        "10:00-14:00; Jun 01 - Jun 30 off; Jun 10 - Jun 15 off",
       )
 
       expect(isOpenOn(new Date("2020-06-11:00:00.000Z"))).to.eq(false)
@@ -95,21 +95,21 @@ describe("isOpenOn", () => {
 
   context("on a public holiday, when it's closed on a public holiday", () => {
     it("returns false", () => {
-      const {isOpenOn} = zonedOpeningHours("Mo 10:00-14:00; PH off", {
-        publicHolidays: ["2020-01-06"],
+      const {isOpenOn} = zonedOpeningHours("10:00-14:00; PH off", {
+        countryCode: "gb",
       })
 
-      expect(isOpenOn(new Date("2020-01-06T11:00:00.000Z"))).to.eq(false)
+      expect(isOpenOn(new Date("2020-12-25T11:00:00.000Z"))).to.eq(false)
     })
   })
 
   context("on a public holiday, when it's open on a public holiday", () => {
     it("returns true", () => {
-      const {isOpenOn} = zonedOpeningHours("Mo 10:00-14:00; PH 10:00-18:00", {
-        publicHolidays: ["2020-01-06"],
+      const {isOpenOn} = zonedOpeningHours("10:00-14:00; PH 10:00-18:00", {
+        countryCode: "gb",
       })
 
-      expect(isOpenOn(new Date("2020-01-06T17:00:00.000Z"))).to.eq(true)
+      expect(isOpenOn(new Date("2020-12-25T17:00:00.000Z"))).to.eq(true)
     })
   })
 
@@ -225,7 +225,7 @@ describe("nextOpenOn", () => {
       )
       expect(
         nextOpenOn(new Date("2020-09-03T16:00:00.000Z"))?.toISOString(),
-      ).to.eq(new Date("2021-02-03T10:00:00.000Z").toISOString())
+      ).to.eq(new Date("2021-02-01T10:00:00.000Z").toISOString())
     })
   })
 
@@ -294,38 +294,38 @@ describe("nextOpenOn", () => {
   })
 
   context("Opens on Wednesdays and public holidays", () => {
-    it("returns Monday", () => {
+    it("returns Friday (Christmas) when given previous Thursday", () => {
       const {nextOpenOn} = zonedOpeningHours("We 10:00-14:00; PH 08:00-16:00", {
-        publicHolidays: ["2020-01-06"],
+        countryCode: "gb",
       })
 
       expect(
-        nextOpenOn(new Date("2020-01-03T11:00:00.000Z"))?.toISOString(),
-      ).to.eq(new Date("2020-01-06T08:00:00.000Z").toISOString())
+        nextOpenOn(new Date("2020-12-24T11:00:00.000Z"))?.toISOString(),
+      ).to.eq(new Date("2020-12-25T08:00:00.000Z").toISOString())
     })
   })
 
-  context("usually open on Monday, but closes on bank holidays", () => {
+  context("usually open on Friday, but closes on bank holidays", () => {
     it("returns Tuesday", () => {
       const {nextOpenOn} = zonedOpeningHours("Mo-Fr 10:00-14:00; PH off", {
-        publicHolidays: ["2020-01-06"],
+        countryCode: "gb",
       })
 
       expect(
-        nextOpenOn(new Date("2020-01-03T17:00:00.000Z"))?.toISOString(),
-      ).to.eq(new Date("2020-01-07T10:00:00.000Z").toISOString())
+        nextOpenOn(new Date("2020-12-24T17:00:00.000Z"))?.toISOString(),
+      ).to.eq(new Date("2020-12-28T10:00:00.000Z").toISOString())
     })
   })
 
   context(
-    "Public holidays are open, and a public holiday from the past is supplied",
+    "Public holidays are open, but the next open date is not on a public holiday",
     () => {
       it("returns the next open day", () => {
         const {
           nextOpenOn,
         } = zonedOpeningHours(
           "May 01 - Oct 31 Sa 11:00-18:00; PH 11:00-18:00",
-          {publicHolidays: ["2021-04-05", "2021-05-03", "2021-05-31"]},
+          {countryCode: "gb"},
         )
 
         expect(
@@ -400,22 +400,21 @@ describe("isOpenOnDate", () => {
 
   context("A date on a public holiday, when public holidays are open", () => {
     it("returns true", () => {
-      const {isOpenOnDate} = zonedOpeningHours(
-        "Mo 10:00-18:00; PH 10:00-18:00",
-        {publicHolidays: ["2020-12-04"]},
-      )
+      const {isOpenOnDate} = zonedOpeningHours("10:00-18:00; PH 10:00-18:00", {
+        countryCode: "gb",
+      })
 
-      expect(isOpenOnDate(new Date("2020-12-04"))).to.eq(true)
+      expect(isOpenOnDate(new Date("2020-12-25"))).to.eq(true)
     })
   })
 
   context("A date on a public holiday, when public holidays are closed", () => {
     it("returns false", () => {
-      const {isOpenOnDate} = zonedOpeningHours("Mo 10:00-18:00; PH off", {
-        publicHolidays: ["2020-12-04"],
+      const {isOpenOnDate} = zonedOpeningHours("10:00-18:00; PH off", {
+        countryCode: "gb",
       })
 
-      expect(isOpenOnDate(new Date("2020-12-04"))).to.eq(false)
+      expect(isOpenOnDate(new Date("2020-12-25"))).to.eq(false)
     })
   })
 })
