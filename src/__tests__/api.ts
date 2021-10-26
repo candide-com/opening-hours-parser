@@ -204,7 +204,7 @@ describe("nextOpenOn", () => {
     })
   })
 
-  context("Currently open on a date that is open 24 hours a day", () => {
+  context("currently open on a date that is open 24 hours a day", () => {
     it("returns current date", () => {
       const {nextOpenOn} = zonedOpeningHours("Mo 10:00-24:00")
 
@@ -357,7 +357,7 @@ describe("nextOpenOn", () => {
     })
   })
 
-  context("Opens on Wednesdays and public holidays", () => {
+  context("opens on Wednesdays and public holidays", () => {
     it("returns Friday (Christmas) when given previous Thursday", () => {
       const {nextOpenOn} = zonedOpeningHours("We 10:00-14:00; PH 08:00-16:00", {
         countryCode: "gb",
@@ -382,7 +382,7 @@ describe("nextOpenOn", () => {
   })
 
   context(
-    "Public holidays are open, but the next open date is not on a public holiday",
+    "public holidays are open, but the next open date is not on a public holiday",
     () => {
       it("returns the next open day", () => {
         const {
@@ -400,7 +400,7 @@ describe("nextOpenOn", () => {
   )
 
   context(
-    "Last Sunday of the season, with a single open day the week after",
+    "last Sunday of the season, with a single open day the week after",
     () => {
       it("Returns the expected date because there is no startOfWeek problem", () => {
         const {isOpenOn, nextOpenOn} = zonedOpeningHours(
@@ -416,8 +416,8 @@ describe("nextOpenOn", () => {
     },
   )
 
-  context("A date within a season that wraps around end of the year", () => {
-    it("Returns the next open date within the season", () => {
+  context("a date within a season that wraps around end of the year", () => {
+    it("returns the next open date within the season", () => {
       const schedule = "Oct 01 - Mar 31 Tu-Sa 10:00-17:00"
 
       const {nextOpenOn} = zonedOpeningHours(schedule)
@@ -442,7 +442,7 @@ describe("nextOpenOn", () => {
 })
 
 describe("isOpenOnDate", () => {
-  context("A date on an open day", () => {
+  context("a date on an open day", () => {
     it("return true", () => {
       const {isOpenOnDate} = zonedOpeningHours("Su 10:00-18:00")
 
@@ -450,7 +450,7 @@ describe("isOpenOnDate", () => {
     })
   })
 
-  context("A date on a non-open day due to the day of the week", () => {
+  context("a date on a non-open day due to the day of the week", () => {
     it("return false", () => {
       const {isOpenOnDate} = zonedOpeningHours("Su 10:00-18:00")
 
@@ -458,7 +458,7 @@ describe("isOpenOnDate", () => {
     })
   })
 
-  context("A date on a non-open day due to the season being over", () => {
+  context("a date on a non-open day due to the season being over", () => {
     it("return false", () => {
       const {isOpenOnDate} = zonedOpeningHours("Oct 01 - Dec 06 Mo 10:00-18:00")
 
@@ -466,7 +466,7 @@ describe("isOpenOnDate", () => {
     })
   })
 
-  context("A date on an explicitly closed day", () => {
+  context("a date on an explicitly closed day", () => {
     it("return false", () => {
       const {isOpenOnDate} = zonedOpeningHours("Oct 01 - Oct 03 off")
 
@@ -474,7 +474,7 @@ describe("isOpenOnDate", () => {
     })
   })
 
-  context("A date on a public holiday, when public holidays are open", () => {
+  context("a date on a public holiday, when public holidays are open", () => {
     it("returns true", () => {
       const {isOpenOnDate} = zonedOpeningHours("10:00-18:00; PH 10:00-18:00", {
         countryCode: "gb",
@@ -484,7 +484,7 @@ describe("isOpenOnDate", () => {
     })
   })
 
-  context("A date on a public holiday, when public holidays are closed", () => {
+  context("a date on a public holiday, when public holidays are closed", () => {
     it("returns false", () => {
       const {isOpenOnDate} = zonedOpeningHours("10:00-18:00; PH off", {
         countryCode: "gb",
