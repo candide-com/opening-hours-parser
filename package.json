@@ -22,9 +22,8 @@
   "author": "Mark Withers",
   "license": "ISC",
   "dependencies": {
-    "date-fns": "^2.17.0",
-    "date-fns-tz": "^1.1.6",
-    "opening_hours": "^3.7.0"
+    "opening_hours": "^3.7.0",
+    "ts-luxon": "^3.0.1"
   },
   "devDependencies": {
     "@candide/eslint-config-node-service": "^1.0.1",

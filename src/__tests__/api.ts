@@ -129,7 +129,7 @@ describe("isOpenOn", () => {
     })
   })
 
-  context("open only for one year", () => {
+  context("open for a single year", () => {
     const {isOpenOn} = zonedOpeningHours("2020 10:00-14:00")
 
     it("returns true during that year", () => {
